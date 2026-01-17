@@ -1,0 +1,26 @@
+{
+  "name": "@myclinic/types",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Shared TypeScript types for MyClinic",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./auth": "./src/auth.ts",
+    "./patient": "./src/patient.ts",
+    "./appointment": "./src/appointment.ts",
+    "./invoice": "./src/invoice.ts",
+    "./conversation": "./src/conversation.ts",
+    "./common": "./src/common.ts"
+  },
+  "scripts": {
+    "lint": "eslint src --ext .ts",
+    "lint:fix": "eslint src --ext .ts --fix",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@myclinic/config": "workspace:*",
+    "typescript": "^5.3.0"
+  }
+}

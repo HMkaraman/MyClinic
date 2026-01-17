@@ -1,0 +1,618 @@
+// MyClinic Database Schema
+// PostgreSQL + Prisma ORM
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ===========================================
+// Multi-tenant: Tenant (Clinic)
+// ===========================================
+model Tenant {
+  id        String   @id @default(cuid())
+  name      String
+  settings  Json?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  branches      Branch[]
+  users         User[]
+  patients      Patient[]
+  services      Service[]
+  leads         Lead[]
+  conversations Conversation[]
+  auditEvents   AuditEvent[]
+
+  @@map("tenants")
+}
+
+// ===========================================
+// Multi-tenant: Branch
+// ===========================================
+model Branch {
+  id        String   @id @default(cuid())
+  tenantId  String   @map("tenant_id")
+  name      String
+  address   String?
+  phone     String?
+  settings  Json?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  tenant       Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  patients     Patient[]
+  appointments Appointment[]
+  visits       Visit[]
+  invoices     Invoice[]
+  expenses     Expense[]
+  auditEvents  AuditEvent[]
+
+  @@map("branches")
+}
+
+// ===========================================
+// Authentication: User
+// ===========================================
+model User {
+  id               String    @id @default(cuid())
+  tenantId         String    @map("tenant_id")
+  email            String    @unique
+  phone            String?
+  name             String
+  passwordHash     String    @map("password_hash")
+  role             Role      @default(RECEPTION)
+  branchIds        String[]  @map("branch_ids")
+  twoFactorEnabled Boolean   @default(false) @map("two_factor_enabled")
+  twoFactorSecret  String?   @map("two_factor_secret")
+  status           UserStatus @default(ACTIVE)
+  language         Language   @default(ar)
+  lastLoginAt      DateTime?  @map("last_login_at")
+  createdAt        DateTime   @default(now()) @map("created_at")
+  updatedAt        DateTime   @updatedAt @map("updated_at")
+
+  // Relations
+  tenant         Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  visits         Visit[]         @relation("DoctorVisits")
+  appointments   Appointment[]   @relation("DoctorAppointments")
+  assignedConversations Conversation[] @relation("AssignedConversations")
+  assignedTasks  Task[]          @relation("AssignedTasks")
+  createdTasks   Task[]          @relation("CreatedTasks")
+  payments       Payment[]
+  expenses       Expense[]
+  attachments    Attachment[]
+  activityEvents ActivityEvent[] @relation("ActorEvents")
+  auditEvents    AuditEvent[]    @relation("UserAuditEvents")
+  messages       Message[]
+
+  @@map("users")
+}
+
+enum Role {
+  ADMIN
+  MANAGER
+  RECEPTION
+  DOCTOR
+  NURSE
+  ACCOUNTANT
+  SUPPORT
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+}
+
+enum Language {
+  ar
+  en
+  ckb
+  kmr
+}
+
+// ===========================================
+// Patient
+// ===========================================
+model Patient {
+  id             String        @id @default(cuid())
+  tenantId       String        @map("tenant_id")
+  branchId       String        @map("branch_id")
+  fileNumber     String        @map("file_number")
+  name           String
+  phone          String
+  email          String?
+  dateOfBirth    DateTime?     @map("date_of_birth")
+  gender         Gender?
+  address        String?
+  medicalSummary Json?         @map("medical_summary")
+  source         PatientSource @default(WALK_IN)
+  createdAt      DateTime      @default(now()) @map("created_at")
+  updatedAt      DateTime      @updatedAt @map("updated_at")
+  deletedAt      DateTime?     @map("deleted_at")
+
+  // Relations
+  tenant        Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  branch        Branch         @relation(fields: [branchId], references: [id])
+  appointments  Appointment[]
+  visits        Visit[]
+  invoices      Invoice[]
+  conversations Conversation[]
+  lead          Lead?
+
+  @@unique([tenantId, fileNumber])
+  @@index([tenantId, phone])
+  @@index([tenantId, name])
+  @@map("patients")
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum PatientSource {
+  WALK_IN
+  REFERRAL
+  WEBSITE
+  WHATSAPP
+  SOCIAL_MEDIA
+  PHONE
+  OTHER
+}
+
+// ===========================================
+// Service
+// ===========================================
+model Service {
+  id              String   @id @default(cuid())
+  tenantId        String   @map("tenant_id")
+  name            String
+  nameAr          String?  @map("name_ar")
+  nameEn          String?  @map("name_en")
+  nameCkb         String?  @map("name_ckb")
+  nameKmr         String?  @map("name_kmr")
+  durationMinutes Int      @map("duration_minutes")
+  price           Decimal  @db.Decimal(10, 2)
+  category        String?
+  active          Boolean  @default(true)
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  tenant       Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  appointments Appointment[]
+
+  @@map("services")
+}
+
+// ===========================================
+// Appointment
+// ===========================================
+model Appointment {
+  id               String            @id @default(cuid())
+  branchId         String            @map("branch_id")
+  patientId        String            @map("patient_id")
+  doctorId         String            @map("doctor_id")
+  serviceId        String            @map("service_id")
+  scheduledAt      DateTime          @map("scheduled_at")
+  durationMinutes  Int               @map("duration_minutes")
+  status           AppointmentStatus @default(NEW)
+  arrivalTime      DateTime?         @map("arrival_time")
+  checkInTime      DateTime?         @map("check_in_time")
+  checkOutTime     DateTime?         @map("check_out_time")
+  rescheduleReason String?           @map("reschedule_reason")
+  cancelReason     String?           @map("cancel_reason")
+  notes            String?
+  createdAt        DateTime          @default(now()) @map("created_at")
+  updatedAt        DateTime          @updatedAt @map("updated_at")
+
+  // Relations
+  branch   Branch   @relation(fields: [branchId], references: [id])
+  patient  Patient  @relation(fields: [patientId], references: [id])
+  doctor   User     @relation("DoctorAppointments", fields: [doctorId], references: [id])
+  service  Service  @relation(fields: [serviceId], references: [id])
+  visit    Visit?
+  invoices Invoice[]
+  tasks    Task[]
+
+  @@index([branchId, scheduledAt])
+  @@index([doctorId, scheduledAt])
+  @@index([patientId])
+  @@map("appointments")
+}
+
+enum AppointmentStatus {
+  NEW
+  CONFIRMED
+  ARRIVED
+  IN_PROGRESS
+  COMPLETED
+  NO_SHOW
+  CANCELLED
+  RESCHEDULED
+}
+
+// ===========================================
+// Visit (Medical Record)
+// ===========================================
+model Visit {
+  id             String   @id @default(cuid())
+  branchId       String   @map("branch_id")
+  patientId      String   @map("patient_id")
+  appointmentId  String?  @unique @map("appointment_id")
+  doctorId       String   @map("doctor_id")
+  chiefComplaint String?  @map("chief_complaint")
+  diagnosis      String?
+  treatmentNotes String?  @map("treatment_notes")
+  prescriptions  Json?
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  branch      Branch       @relation(fields: [branchId], references: [id])
+  patient     Patient      @relation(fields: [patientId], references: [id])
+  appointment Appointment? @relation(fields: [appointmentId], references: [id])
+  doctor      User         @relation("DoctorVisits", fields: [doctorId], references: [id])
+  invoices    Invoice[]
+
+  @@index([patientId])
+  @@index([doctorId])
+  @@map("visits")
+}
+
+// ===========================================
+// Invoice
+// ===========================================
+model Invoice {
+  id             String        @id @default(cuid())
+  branchId       String        @map("branch_id")
+  patientId      String        @map("patient_id")
+  appointmentId  String?       @map("appointment_id")
+  visitId        String?       @map("visit_id")
+  invoiceNumber  String        @unique @map("invoice_number")
+  items          Json
+  subtotal       Decimal       @db.Decimal(10, 2)
+  discount       Decimal?      @db.Decimal(10, 2)
+  discountReason String?       @map("discount_reason")
+  tax            Decimal?      @db.Decimal(10, 2)
+  total          Decimal       @db.Decimal(10, 2)
+  paidAmount     Decimal       @default(0) @map("paid_amount") @db.Decimal(10, 2)
+  status         InvoiceStatus @default(PENDING)
+  dueDate        DateTime?     @map("due_date")
+  notes          String?
+  createdAt      DateTime      @default(now()) @map("created_at")
+  updatedAt      DateTime      @updatedAt @map("updated_at")
+
+  // Relations
+  branch      Branch       @relation(fields: [branchId], references: [id])
+  patient     Patient      @relation(fields: [patientId], references: [id])
+  appointment Appointment? @relation(fields: [appointmentId], references: [id])
+  visit       Visit?       @relation(fields: [visitId], references: [id])
+  payments    Payment[]
+
+  @@index([branchId, createdAt])
+  @@index([patientId])
+  @@map("invoices")
+}
+
+enum InvoiceStatus {
+  DRAFT
+  PENDING
+  PARTIAL
+  PAID
+  CANCELLED
+  REFUNDED
+}
+
+// ===========================================
+// Payment
+// ===========================================
+model Payment {
+  id        String        @id @default(cuid())
+  invoiceId String        @map("invoice_id")
+  amount    Decimal       @db.Decimal(10, 2)
+  method    PaymentMethod
+  reference String?
+  notes     String?
+  createdBy String        @map("created_by")
+  createdAt DateTime      @default(now()) @map("created_at")
+
+  // Relations
+  invoice Invoice @relation(fields: [invoiceId], references: [id])
+  user    User    @relation(fields: [createdBy], references: [id])
+
+  @@map("payments")
+}
+
+enum PaymentMethod {
+  CASH
+  CARD
+  BANK_TRANSFER
+  ONLINE
+  OTHER
+}
+
+// ===========================================
+// Expense
+// ===========================================
+model Expense {
+  id          String          @id @default(cuid())
+  branchId    String          @map("branch_id")
+  category    ExpenseCategory
+  amount      Decimal         @db.Decimal(10, 2)
+  description String
+  date        DateTime
+  receiptUrl  String?         @map("receipt_url")
+  createdBy   String          @map("created_by")
+  createdAt   DateTime        @default(now()) @map("created_at")
+
+  // Relations
+  branch Branch @relation(fields: [branchId], references: [id])
+  user   User   @relation(fields: [createdBy], references: [id])
+
+  @@index([branchId, date])
+  @@map("expenses")
+}
+
+enum ExpenseCategory {
+  RENT
+  UTILITIES
+  SUPPLIES
+  EQUIPMENT
+  SALARIES
+  MARKETING
+  MAINTENANCE
+  OTHER
+}
+
+// ===========================================
+// Lead (CRM)
+// ===========================================
+model Lead {
+  id        String        @id @default(cuid())
+  tenantId  String        @map("tenant_id")
+  patientId String?       @unique @map("patient_id")
+  name      String
+  phone     String
+  email     String?
+  source    Channel
+  stage     PipelineStage @default(INQUIRY)
+  notes     String?
+  createdAt DateTime      @default(now()) @map("created_at")
+  updatedAt DateTime      @updatedAt @map("updated_at")
+
+  // Relations
+  tenant        Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  patient       Patient?       @relation(fields: [patientId], references: [id])
+  conversations Conversation[]
+  tasks         Task[]
+
+  @@index([tenantId, phone])
+  @@map("leads")
+}
+
+enum PipelineStage {
+  INQUIRY
+  QUALIFIED
+  BOOKED
+  ARRIVED
+  FOLLOW_UP
+  RE_ENGAGE
+  CONVERTED
+  LOST
+}
+
+// ===========================================
+// Conversation (Inbox)
+// ===========================================
+model Conversation {
+  id            String             @id @default(cuid())
+  tenantId      String             @map("tenant_id")
+  channel       Channel
+  externalId    String?            @map("external_id")
+  leadId        String?            @map("lead_id")
+  patientId     String?            @map("patient_id")
+  assignedTo    String?            @map("assigned_to")
+  tags          String[]
+  pipelineStage PipelineStage?     @map("pipeline_stage")
+  status        ConversationStatus @default(OPEN)
+  lastMessageAt DateTime?          @map("last_message_at")
+  createdAt     DateTime           @default(now()) @map("created_at")
+  updatedAt     DateTime           @updatedAt @map("updated_at")
+
+  // Relations
+  tenant   Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  lead     Lead?     @relation(fields: [leadId], references: [id])
+  patient  Patient?  @relation(fields: [patientId], references: [id])
+  assignee User?     @relation("AssignedConversations", fields: [assignedTo], references: [id])
+  messages Message[]
+  tasks    Task[]
+
+  @@unique([tenantId, channel, externalId])
+  @@index([tenantId, status])
+  @@index([assignedTo])
+  @@map("conversations")
+}
+
+enum Channel {
+  WHATSAPP
+  SMS
+  EMAIL
+  WEB_CHAT
+  PHONE
+}
+
+enum ConversationStatus {
+  OPEN
+  PENDING
+  RESOLVED
+  CLOSED
+}
+
+// ===========================================
+// Message
+// ===========================================
+model Message {
+  id               String           @id @default(cuid())
+  conversationId   String           @map("conversation_id")
+  direction        MessageDirection
+  content          String
+  attachments      String[]
+  isInternalNote   Boolean          @default(false) @map("is_internal_note")
+  senderId         String?          @map("sender_id")
+  externalSenderId String?          @map("external_sender_id")
+  readAt           DateTime?        @map("read_at")
+  createdAt        DateTime         @default(now()) @map("created_at")
+
+  // Relations
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender       User?        @relation(fields: [senderId], references: [id])
+
+  @@index([conversationId, createdAt])
+  @@map("messages")
+}
+
+enum MessageDirection {
+  INBOUND
+  OUTBOUND
+}
+
+// ===========================================
+// Task
+// ===========================================
+model Task {
+  id             String         @id @default(cuid())
+  tenantId       String         @map("tenant_id")
+  entityType     TaskEntityType @map("entity_type")
+  entityId       String         @map("entity_id")
+  assignedTo     String         @map("assigned_to")
+  title          String
+  description    String?
+  dueDate        DateTime       @map("due_date")
+  priority       TaskPriority   @default(MEDIUM)
+  status         TaskStatus     @default(PENDING)
+  completedAt    DateTime?      @map("completed_at")
+  createdBy      String         @map("created_by")
+  createdAt      DateTime       @default(now()) @map("created_at")
+  updatedAt      DateTime       @updatedAt @map("updated_at")
+
+  // Relations
+  assignee     User          @relation("AssignedTasks", fields: [assignedTo], references: [id])
+  creator      User          @relation("CreatedTasks", fields: [createdBy], references: [id])
+  lead         Lead?         @relation(fields: [entityId], references: [id], map: "task_lead_fk")
+  appointment  Appointment?  @relation(fields: [entityId], references: [id], map: "task_appointment_fk")
+  conversation Conversation? @relation(fields: [entityId], references: [id], map: "task_conversation_fk")
+
+  @@index([assignedTo, status])
+  @@index([dueDate])
+  @@map("tasks")
+}
+
+enum TaskEntityType {
+  LEAD
+  PATIENT
+  CONVERSATION
+  APPOINTMENT
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum TaskStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+// ===========================================
+// Attachment
+// ===========================================
+model Attachment {
+  id         String               @id @default(cuid())
+  entityType AttachmentEntityType @map("entity_type")
+  entityId   String               @map("entity_id")
+  filePath   String               @map("file_path")
+  fileName   String               @map("file_name")
+  fileType   String               @map("file_type")
+  fileSize   Int                  @map("file_size")
+  uploadedBy String               @map("uploaded_by")
+  createdAt  DateTime             @default(now()) @map("created_at")
+
+  // Relations
+  uploader User @relation(fields: [uploadedBy], references: [id])
+
+  @@index([entityType, entityId])
+  @@map("attachments")
+}
+
+enum AttachmentEntityType {
+  PATIENT
+  VISIT
+  APPOINTMENT
+  INVOICE
+  CONVERSATION
+  COMMENT
+}
+
+// ===========================================
+// Activity Event (Timeline)
+// ===========================================
+model ActivityEvent {
+  id         String   @id @default(cuid())
+  entityType String   @map("entity_type")
+  entityId   String   @map("entity_id")
+  action     String
+  actorId    String   @map("actor_id")
+  metadata   Json?
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  // Relations
+  actor User @relation("ActorEvents", fields: [actorId], references: [id])
+
+  @@index([entityType, entityId])
+  @@index([actorId])
+  @@map("activity_events")
+}
+
+// ===========================================
+// Audit Event (Compliance Log)
+// ===========================================
+model AuditEvent {
+  id            String   @id @default(cuid())
+  tenantId      String   @map("tenant_id")
+  branchId      String?  @map("branch_id")
+  userId        String   @map("user_id")
+  userRole      String   @map("user_role")
+  entityType    String   @map("entity_type")
+  entityId      String   @map("entity_id")
+  action        String
+  before        Json?
+  after         Json?
+  correlationId String?  @map("correlation_id")
+  ipAddress     String?  @map("ip_address")
+  userAgent     String?  @map("user_agent")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  // Relations
+  tenant Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  branch Branch? @relation(fields: [branchId], references: [id])
+  user   User    @relation("UserAuditEvents", fields: [userId], references: [id])
+
+  @@index([tenantId, entityType, entityId])
+  @@index([tenantId, createdAt])
+  @@index([correlationId])
+  @@map("audit_events")
+}
