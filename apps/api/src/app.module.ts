@@ -20,6 +20,11 @@ import { VisitsModule } from './modules/visits/visits.module';
 import { InvoicesModule } from './modules/invoices/invoices.module';
 import { AttachmentsModule } from './modules/attachments/attachments.module';
 
+// Milestone 3 Modules
+import { ConversationsModule } from './modules/conversations/conversations.module';
+import { LeadsModule } from './modules/leads/leads.module';
+import { TasksModule } from './modules/tasks/tasks.module';
+
 import { JwtAuthGuard } from './modules/auth/guards/jwt-auth.guard';
 import { RolesGuard } from './modules/auth/guards/roles.guard';
 import { TenantGuard } from './modules/tenant/guards/tenant.guard';
@@ -62,11 +67,10 @@ import { AuditInterceptor } from './modules/audit/interceptors/audit.interceptor
     InvoicesModule,
     AttachmentsModule,
 
-    // TODO: Add more modules as we build them
-    // ConversationsModule,
-    // LeadsModule,
-    // TasksModule,
-    // ReportsModule,
+    // Feature Modules - Milestone 3
+    ConversationsModule,
+    LeadsModule,
+    TasksModule,
   ],
   controllers: [],
   providers: [

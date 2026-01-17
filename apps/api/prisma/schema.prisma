@@ -221,7 +221,6 @@ model Appointment {
   service  Service  @relation(fields: [serviceId], references: [id])
   visit    Visit?
   invoices Invoice[]
-  tasks    Task[]
 
   @@index([branchId, scheduledAt])
   @@index([doctorId, scheduledAt])
@@ -393,7 +392,6 @@ model Lead {
   tenant        Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   patient       Patient?       @relation(fields: [patientId], references: [id])
   conversations Conversation[]
-  tasks         Task[]
 
   @@index([tenantId, phone])
   @@map("leads")
@@ -434,7 +432,6 @@ model Conversation {
   patient  Patient?  @relation(fields: [patientId], references: [id])
   assignee User?     @relation("AssignedConversations", fields: [assignedTo], references: [id])
   messages Message[]
-  tasks    Task[]
 
   @@unique([tenantId, channel, externalId])
   @@index([tenantId, status])
@@ -505,14 +502,14 @@ model Task {
   updatedAt      DateTime       @updatedAt @map("updated_at")
 
   // Relations
-  assignee     User          @relation("AssignedTasks", fields: [assignedTo], references: [id])
-  creator      User          @relation("CreatedTasks", fields: [createdBy], references: [id])
-  lead         Lead?         @relation(fields: [entityId], references: [id], map: "task_lead_fk")
-  appointment  Appointment?  @relation(fields: [entityId], references: [id], map: "task_appointment_fk")
-  conversation Conversation? @relation(fields: [entityId], references: [id], map: "task_conversation_fk")
+  assignee User @relation("AssignedTasks", fields: [assignedTo], references: [id])
+  creator  User @relation("CreatedTasks", fields: [createdBy], references: [id])
+  // Note: entityId is polymorphic - references Lead, Patient, Conversation, or Appointment
+  // based on entityType. No FK constraint to allow flexibility.
 
   @@index([assignedTo, status])
   @@index([dueDate])
+  @@index([entityType, entityId])
   @@map("tasks")
 }
 

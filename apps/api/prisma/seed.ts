@@ -1,4 +1,15 @@
-import { PrismaClient, Role, Language } from '@prisma/client';
+import {
+  PrismaClient,
+  Role,
+  Language,
+  Channel,
+  PipelineStage,
+  ConversationStatus,
+  MessageDirection,
+  TaskEntityType,
+  TaskPriority,
+  TaskStatus,
+} from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
@@ -294,6 +305,183 @@ async function main() {
     },
   });
   console.log('✓ Created appointment for:', patient1.name);
+
+  // =============================================
+  // Milestone 3: CRM & Communication Data
+  // =============================================
+
+  // Create sample leads
+  const lead1 = await prisma.lead.upsert({
+    where: { id: 'lead-demo-1' },
+    update: {},
+    create: {
+      id: 'lead-demo-1',
+      tenantId: tenant.id,
+      name: 'Omar Khalil',
+      phone: '+964 750 333 3333',
+      email: 'omar.khalil@example.com',
+      source: Channel.WHATSAPP,
+      stage: PipelineStage.QUALIFIED,
+      notes: 'Interested in dental services. Prefers morning appointments.',
+    },
+  });
+  console.log('✓ Created lead:', lead1.name);
+
+  const lead2 = await prisma.lead.upsert({
+    where: { id: 'lead-demo-2' },
+    update: {},
+    create: {
+      id: 'lead-demo-2',
+      tenantId: tenant.id,
+      name: 'Sara Ali',
+      phone: '+964 750 444 4444',
+      source: Channel.WEB_CHAT,
+      stage: PipelineStage.INQUIRY,
+      notes: 'Asked about consultation pricing',
+    },
+  });
+  console.log('✓ Created lead:', lead2.name);
+
+  const lead3 = await prisma.lead.upsert({
+    where: { id: 'lead-demo-3' },
+    update: {},
+    create: {
+      id: 'lead-demo-3',
+      tenantId: tenant.id,
+      name: 'Mustafa Rashid',
+      phone: '+964 750 555 5555',
+      email: 'mustafa.r@example.com',
+      source: Channel.PHONE,
+      stage: PipelineStage.BOOKED,
+      notes: 'Appointment scheduled for next week',
+    },
+  });
+  console.log('✓ Created lead:', lead3.name);
+
+  // Create sample conversations
+  const conversation1 = await prisma.conversation.upsert({
+    where: { id: 'conversation-demo-1' },
+    update: {},
+    create: {
+      id: 'conversation-demo-1',
+      tenantId: tenant.id,
+      channel: Channel.WHATSAPP,
+      externalId: '+964750333333',
+      leadId: lead1.id,
+      assignedTo: support.id,
+      tags: ['interested', 'dental'],
+      pipelineStage: PipelineStage.QUALIFIED,
+      status: ConversationStatus.OPEN,
+      lastMessageAt: new Date(),
+    },
+  });
+  console.log('✓ Created conversation for lead:', lead1.name);
+
+  // Add messages to conversation
+  await prisma.message.createMany({
+    data: [
+      {
+        conversationId: conversation1.id,
+        direction: MessageDirection.INBOUND,
+        content: 'مرحبا، أريد الاستفسار عن خدمات طب الأسنان',
+        externalSenderId: '+964750333333',
+        createdAt: new Date(Date.now() - 3600000), // 1 hour ago
+      },
+      {
+        conversationId: conversation1.id,
+        direction: MessageDirection.OUTBOUND,
+        content: 'أهلاً بك! نقدم مجموعة متنوعة من خدمات طب الأسنان. كيف يمكننا مساعدتك؟',
+        senderId: support.id,
+        createdAt: new Date(Date.now() - 3500000),
+      },
+      {
+        conversationId: conversation1.id,
+        direction: MessageDirection.INBOUND,
+        content: 'هل يمكنني حجز موعد للكشف؟',
+        externalSenderId: '+964750333333',
+        createdAt: new Date(Date.now() - 3400000),
+      },
+    ],
+  });
+  console.log('✓ Created sample messages');
+
+  const conversation2 = await prisma.conversation.upsert({
+    where: { id: 'conversation-demo-2' },
+    update: {},
+    create: {
+      id: 'conversation-demo-2',
+      tenantId: tenant.id,
+      channel: Channel.WEB_CHAT,
+      externalId: 'webchat-session-123',
+      leadId: lead2.id,
+      tags: ['pricing'],
+      pipelineStage: PipelineStage.INQUIRY,
+      status: ConversationStatus.PENDING,
+      lastMessageAt: new Date(Date.now() - 86400000), // 1 day ago
+    },
+  });
+  console.log('✓ Created conversation for lead:', lead2.name);
+
+  // Create sample tasks
+  const nextWeek = new Date();
+  nextWeek.setDate(nextWeek.getDate() + 7);
+
+  const task1 = await prisma.task.upsert({
+    where: { id: 'task-demo-1' },
+    update: {},
+    create: {
+      id: 'task-demo-1',
+      tenantId: tenant.id,
+      entityType: TaskEntityType.LEAD,
+      entityId: lead1.id,
+      assignedTo: support.id,
+      title: 'Follow up with Omar about appointment booking',
+      description: 'Call to confirm interest and schedule consultation',
+      dueDate: tomorrow,
+      priority: TaskPriority.HIGH,
+      status: TaskStatus.PENDING,
+      createdBy: reception.id,
+    },
+  });
+  console.log('✓ Created task:', task1.title);
+
+  const task2 = await prisma.task.upsert({
+    where: { id: 'task-demo-2' },
+    update: {},
+    create: {
+      id: 'task-demo-2',
+      tenantId: tenant.id,
+      entityType: TaskEntityType.CONVERSATION,
+      entityId: conversation2.id,
+      assignedTo: support.id,
+      title: 'Respond to pricing inquiry',
+      description: 'Send pricing information for consultation services',
+      dueDate: new Date(),
+      priority: TaskPriority.MEDIUM,
+      status: TaskStatus.IN_PROGRESS,
+      createdBy: manager.id,
+    },
+  });
+  console.log('✓ Created task:', task2.title);
+
+  const task3 = await prisma.task.upsert({
+    where: { id: 'task-demo-3' },
+    update: {},
+    create: {
+      id: 'task-demo-3',
+      tenantId: tenant.id,
+      entityType: TaskEntityType.APPOINTMENT,
+      entityId: appointment.id,
+      assignedTo: reception.id,
+      title: 'Confirm appointment with Ahmed',
+      description: 'Call patient to confirm tomorrow\'s appointment',
+      dueDate: new Date(),
+      priority: TaskPriority.HIGH,
+      status: TaskStatus.PENDING,
+      createdBy: reception.id,
+    },
+  });
+  console.log('✓ Created task:', task3.title);
 
   console.log('\n🎉 Database seed completed successfully!\n');
   console.log('Test credentials:');

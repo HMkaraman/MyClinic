@@ -156,4 +156,35 @@ export class ActivityService {
       metadata,
     });
   }
+
+  async logLeadActivity(
+    leadId: string,
+    action: string,
+    actorId: string,
+    metadata?: Record<string, unknown>,
+  ): Promise<void> {
+    await this.create({
+      entityType: 'Lead',
+      entityId: leadId,
+      action,
+      actorId,
+      metadata,
+    });
+  }
+
+  async logTaskActivity(
+    entityType: string,
+    entityId: string,
+    action: string,
+    actorId: string,
+    metadata?: Record<string, unknown>,
+  ): Promise<void> {
+    await this.create({
+      entityType,
+      entityId,
+      action,
+      actorId,
+      metadata,
+    });
+  }
 }
