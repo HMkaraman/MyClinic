@@ -101,7 +101,8 @@
     "services": "الخدمات",
     "branches": "الفروع",
     "profile": "الملف الشخصي",
-    "ai": "المساعد الذكي"
+    "ai": "المساعد الذكي",
+    "analytics": "التحليلات"
   },
   "patients": {
     "title": "المرضى",
@@ -295,6 +296,113 @@
     "nurse": "ممرض",
     "accountant": "محاسب",
     "support": "دعم"
+  },
+  "analytics": {
+    "title": "التحليلات",
+    "subtitle": "تتبع مقاييس الأداء والرؤى عبر عيادتك",
+    "selectDateRange": "اختر نطاق التاريخ",
+    "granularity": "التفصيل",
+    "date": "التاريخ",
+    "noData": "لا توجد بيانات لهذه الفترة",
+    "datePresets": {
+      "last7days": "آخر 7 أيام",
+      "last30days": "آخر 30 يوم",
+      "last90days": "آخر 90 يوم",
+      "thisMonth": "هذا الشهر",
+      "thisYear": "هذه السنة"
+    },
+    "granularityOptions": {
+      "daily": "يومي",
+      "weekly": "أسبوعي",
+      "monthly": "شهري"
+    },
+    "tabs": {
+      "overview": "نظرة عامة",
+      "revenue": "الإيرادات",
+      "patients": "المرضى",
+      "appointments": "المواعيد",
+      "services": "الخدمات",
+      "staff": "الموظفون",
+      "leads": "العملاء المحتملون"
+    },
+    "kpi": {
+      "revenue": "الإيرادات",
+      "patients": "المرضى",
+      "appointments": "المواعيد",
+      "leads": "العملاء المحتملون",
+      "new": "جديد",
+      "completionRate": "معدل الإكمال",
+      "conversionRate": "معدل التحويل"
+    },
+    "revenue": {
+      "trend": "اتجاه الإيرادات",
+      "total": "إجمالي الإيرادات",
+      "amount": "المبلغ",
+      "byPaymentMethod": "الإيرادات حسب طريقة الدفع",
+      "byService": "الإيرادات حسب الخدمة"
+    },
+    "patients": {
+      "summary": "ملخص المرضى",
+      "total": "إجمالي المرضى",
+      "new": "مرضى جدد",
+      "returning": "مرضى عائدون",
+      "trend": "اتجاه المرضى",
+      "newPatientsOverTime": "المرضى الجدد المسجلون بمرور الوقت",
+      "bySource": "المرضى حسب المصدر",
+      "byGender": "المرضى حسب الجنس",
+      "byBranch": "المرضى حسب الفرع",
+      "count": "العدد"
+    },
+    "appointments": {
+      "summary": "ملخص المواعيد",
+      "total": "إجمالي المواعيد",
+      "completed": "مكتمل",
+      "cancelled": "ملغي",
+      "noShow": "لم يحضر",
+      "avgWaitTime": "متوسط وقت الانتظار",
+      "trend": "اتجاه المواعيد",
+      "completionRate": "معدل الإكمال",
+      "byStatus": "المواعيد حسب الحالة",
+      "byDoctor": "المواعيد حسب الطبيب",
+      "count": "العدد"
+    },
+    "services": {
+      "performance": "أداء الخدمات",
+      "revenueByService": "الإيرادات حسب الخدمة",
+      "details": "تفاصيل الخدمات",
+      "name": "اسم الخدمة",
+      "appointments": "المواعيد",
+      "revenue": "الإيرادات"
+    },
+    "staff": {
+      "productivity": "إنتاجية الموظفين",
+      "revenueByStaff": "الإيرادات حسب الموظف",
+      "details": "تفاصيل الموظفين",
+      "name": "الاسم",
+      "role": "الدور",
+      "appointments": "المواعيد",
+      "avgPerDay": "المتوسط/يوم",
+      "revenue": "الإيرادات"
+    },
+    "leads": {
+      "funnel": "قمع العملاء المحتملين",
+      "stageBreakdown": "توزيع العملاء حسب مرحلة المسار",
+      "trend": "اتجاه العملاء المحتملين",
+      "bySource": "العملاء حسب المصدر",
+      "stageSummary": "ملخص المراحل",
+      "count": "العدد"
+    },
+    "export": {
+      "export": "تصدير",
+      "exporting": "جاري التصدير...",
+      "csv": "تصدير كـ CSV",
+      "excel": "تصدير كـ Excel",
+      "pdf": "تصدير كـ PDF"
+    },
+    "noAccess": {
+      "title": "لا يوجد وصول",
+      "message": "ليس لديك صلاحية لعرض بيانات التحليلات"
+    }
   },
   "errors": {
     "required": "هذا الحقل مطلوب",

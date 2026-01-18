@@ -101,7 +101,8 @@
     "services": "Services",
     "branches": "Branches",
     "profile": "Profile",
-    "ai": "AI Assistant"
+    "ai": "AI Assistant",
+    "analytics": "Analytics"
   },
   "patients": {
     "title": "Patients",
@@ -295,6 +296,113 @@
     "nurse": "Nurse",
     "accountant": "Accountant",
     "support": "Support"
+  },
+  "analytics": {
+    "title": "Analytics",
+    "subtitle": "Track performance metrics and insights across your clinic",
+    "selectDateRange": "Select date range",
+    "granularity": "Granularity",
+    "date": "Date",
+    "noData": "No data available for this period",
+    "datePresets": {
+      "last7days": "Last 7 days",
+      "last30days": "Last 30 days",
+      "last90days": "Last 90 days",
+      "thisMonth": "This month",
+      "thisYear": "This year"
+    },
+    "granularityOptions": {
+      "daily": "Daily",
+      "weekly": "Weekly",
+      "monthly": "Monthly"
+    },
+    "tabs": {
+      "overview": "Overview",
+      "revenue": "Revenue",
+      "patients": "Patients",
+      "appointments": "Appointments",
+      "services": "Services",
+      "staff": "Staff",
+      "leads": "Leads"
+    },
+    "kpi": {
+      "revenue": "Revenue",
+      "patients": "Patients",
+      "appointments": "Appointments",
+      "leads": "Leads",
+      "new": "new",
+      "completionRate": "completion rate",
+      "conversionRate": "conversion rate"
+    },
+    "revenue": {
+      "trend": "Revenue Trend",
+      "total": "Total Revenue",
+      "amount": "Amount",
+      "byPaymentMethod": "Revenue by Payment Method",
+      "byService": "Revenue by Service"
+    },
+    "patients": {
+      "summary": "Patient Summary",
+      "total": "Total Patients",
+      "new": "New Patients",
+      "returning": "Returning Patients",
+      "trend": "Patient Trend",
+      "newPatientsOverTime": "New patients registered over time",
+      "bySource": "Patients by Source",
+      "byGender": "Patients by Gender",
+      "byBranch": "Patients by Branch",
+      "count": "Count"
+    },
+    "appointments": {
+      "summary": "Appointment Summary",
+      "total": "Total Appointments",
+      "completed": "Completed",
+      "cancelled": "Cancelled",
+      "noShow": "No Show",
+      "avgWaitTime": "Avg. Wait Time",
+      "trend": "Appointment Trend",
+      "completionRate": "Completion Rate",
+      "byStatus": "Appointments by Status",
+      "byDoctor": "Appointments by Doctor",
+      "count": "Count"
+    },
+    "services": {
+      "performance": "Service Performance",
+      "revenueByService": "Revenue by Service",
+      "details": "Service Details",
+      "name": "Service Name",
+      "appointments": "Appointments",
+      "revenue": "Revenue"
+    },
+    "staff": {
+      "productivity": "Staff Productivity",
+      "revenueByStaff": "Revenue by Staff Member",
+      "details": "Staff Details",
+      "name": "Name",
+      "role": "Role",
+      "appointments": "Appointments",
+      "avgPerDay": "Avg/Day",
+      "revenue": "Revenue"
+    },
+    "leads": {
+      "funnel": "Lead Funnel",
+      "stageBreakdown": "Lead distribution by pipeline stage",
+      "trend": "Lead Trend",
+      "bySource": "Leads by Source",
+      "stageSummary": "Stage Summary",
+      "count": "Count"
+    },
+    "export": {
+      "export": "Export",
+      "exporting": "Exporting...",
+      "csv": "Export as CSV",
+      "excel": "Export as Excel",
+      "pdf": "Export as PDF"
+    },
+    "noAccess": {
+      "title": "No Access",
+      "message": "You don't have permission to view analytics data"
+    }
   },
   "errors": {
     "required": "This field is required",

@@ -65,7 +65,9 @@
     "settings": "Mîheng",
     "users": "Bikarhêner",
     "services": "Xizmetguzarî",
-    "branches": "Liq"
+    "branches": "Liq",
+    "ai": "Alîkarê Zîrek",
+    "analytics": "Analîtîk"
   },
   "patients": {
     "title": "Nexweş",
@@ -257,6 +259,113 @@
     "nurse": "Hemşîre",
     "accountant": "Hesabdar",
     "support": "Piştgirî"
+  },
+  "analytics": {
+    "title": "Analîtîk",
+    "subtitle": "Pîvan û têbîniyên performansê li klînîka xwe bişopînin",
+    "selectDateRange": "Navdema dîrokê hilbijêre",
+    "granularity": "Hûrgulî",
+    "date": "Dîrok",
+    "noData": "Ji bo vê demê dane tune",
+    "datePresets": {
+      "last7days": "7 Rojên Borî",
+      "last30days": "30 Rojên Borî",
+      "last90days": "90 Rojên Borî",
+      "thisMonth": "Vê Mehê",
+      "thisYear": "Vê Salê"
+    },
+    "granularityOptions": {
+      "daily": "Rojane",
+      "weekly": "Heftane",
+      "monthly": "Mehane"
+    },
+    "tabs": {
+      "overview": "Dîmen",
+      "revenue": "Dahat",
+      "patients": "Nexweş",
+      "appointments": "Mewqît",
+      "services": "Xizmetguzarî",
+      "staff": "Karker",
+      "leads": "Mişteriyên Muhtemel"
+    },
+    "kpi": {
+      "revenue": "Dahat",
+      "patients": "Nexweş",
+      "appointments": "Mewqît",
+      "leads": "Mişteriyên Muhtemel",
+      "new": "nû",
+      "completionRate": "rêjeya temambûnê",
+      "conversionRate": "rêjeya veguherandinê"
+    },
+    "revenue": {
+      "trend": "Meyla Dahatê",
+      "total": "Tevahiya Dahatê",
+      "amount": "Mîqdar",
+      "byPaymentMethod": "Dahat li gorî Awayê Dayînê",
+      "byService": "Dahat li gorî Xizmetguzariyê"
+    },
+    "patients": {
+      "summary": "Kurteya Nexweşan",
+      "total": "Tevahiya Nexweşan",
+      "new": "Nexweşên Nû",
+      "returning": "Nexweşên Vegere",
+      "trend": "Meyla Nexweşan",
+      "newPatientsOverTime": "Nexweşên nû yên tomarkirî bi demê re",
+      "bySource": "Nexweş li gorî Çavkaniyê",
+      "byGender": "Nexweş li gorî Zayendê",
+      "byBranch": "Nexweş li gorî Liqê",
+      "count": "Jimar"
+    },
+    "appointments": {
+      "summary": "Kurteya Mewqîtan",
+      "total": "Tevahiya Mewqîtan",
+      "completed": "Qediya",
+      "cancelled": "Betalkirî",
+      "noShow": "Nehat",
+      "avgWaitTime": "Navdema Li Bendê Man",
+      "trend": "Meyla Mewqîtan",
+      "completionRate": "Rêjeya Temambûnê",
+      "byStatus": "Mewqît li gorî Rewşê",
+      "byDoctor": "Mewqît li gorî Bijîjk",
+      "count": "Jimar"
+    },
+    "services": {
+      "performance": "Performansa Xizmetguzariyê",
+      "revenueByService": "Dahat li gorî Xizmetguzariyê",
+      "details": "Hûrguliyên Xizmetguzariyê",
+      "name": "Navê Xizmetguzariyê",
+      "appointments": "Mewqît",
+      "revenue": "Dahat"
+    },
+    "staff": {
+      "productivity": "Hilberîna Karkeran",
+      "revenueByStaff": "Dahat li gorî Karker",
+      "details": "Hûrguliyên Karkeran",
+      "name": "Nav",
+      "role": "Rol",
+      "appointments": "Mewqît",
+      "avgPerDay": "Nav/Roj",
+      "revenue": "Dahat"
+    },
+    "leads": {
+      "funnel": "Hunela Mişteriyên Muhtemel",
+      "stageBreakdown": "Dabeşkirina mişterî li gorî qonaxên rêyê",
+      "trend": "Meyla Mişteriyên Muhtemel",
+      "bySource": "Mişterî li gorî Çavkaniyê",
+      "stageSummary": "Kurteya Qonaxan",
+      "count": "Jimar"
+    },
+    "export": {
+      "export": "Derxîne",
+      "exporting": "Tê derxistin...",
+      "csv": "Wek CSV derxîne",
+      "excel": "Wek Excel derxîne",
+      "pdf": "Wek PDF derxîne"
+    },
+    "noAccess": {
+      "title": "Destûr Tune",
+      "message": "Tu destûra te nîne ku daneyên analîtîkê bibînî"
+    }
   },
   "errors": {
     "required": "Ev qad pêwîst e",

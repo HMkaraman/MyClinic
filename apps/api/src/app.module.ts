@@ -29,6 +29,9 @@ import { TasksModule } from './modules/tasks/tasks.module';
 // Milestone 4 Modules
 import { AiModule } from './modules/ai/ai.module';
 
+// Milestone 6 Modules
+import { AnalyticsModule } from './modules/analytics/analytics.module';
+
 import { JwtAuthGuard } from './modules/auth/guards/jwt-auth.guard';
 import { RolesGuard } from './modules/auth/guards/roles.guard';
 import { TenantGuard } from './modules/tenant/guards/tenant.guard';
@@ -79,6 +82,9 @@ import { AuditInterceptor } from './modules/audit/interceptors/audit.interceptor
 
     // Feature Modules - Milestone 4
     AiModule,
+
+    // Feature Modules - Milestone 6
+    AnalyticsModule,
   ],
   controllers: [],
   providers: [

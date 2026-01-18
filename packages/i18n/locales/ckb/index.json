@@ -65,7 +65,9 @@
     "settings": "ڕێکخستنەکان",
     "users": "بەکارهێنەرەکان",
     "services": "خزمەتگوزاریەکان",
-    "branches": "لقەکان"
+    "branches": "لقەکان",
+    "ai": "یاریدەدەری زیرەک",
+    "analytics": "شیکاری"
   },
   "patients": {
     "title": "نەخۆشەکان",
@@ -257,6 +259,113 @@
     "nurse": "پەرستار",
     "accountant": "ژمێریار",
     "support": "پشتگیری"
+  },
+  "analytics": {
+    "title": "شیکاری",
+    "subtitle": "بەدواداچوون بۆ پێوەرەکانی کارکردن و بینینەکان لە کلینیکەکەتدا",
+    "selectDateRange": "مەودای بەروار هەڵبژێرە",
+    "granularity": "ورد",
+    "date": "بەروار",
+    "noData": "داتا بوونی نییە بۆ ئەم ماوەیە",
+    "datePresets": {
+      "last7days": "٧ ڕۆژی ڕابردوو",
+      "last30days": "٣٠ ڕۆژی ڕابردوو",
+      "last90days": "٩٠ ڕۆژی ڕابردوو",
+      "thisMonth": "ئەم مانگە",
+      "thisYear": "ئەم ساڵە"
+    },
+    "granularityOptions": {
+      "daily": "ڕۆژانە",
+      "weekly": "هەفتانە",
+      "monthly": "مانگانە"
+    },
+    "tabs": {
+      "overview": "سەرنج",
+      "revenue": "داهات",
+      "patients": "نەخۆشەکان",
+      "appointments": "مەوعیدەکان",
+      "services": "خزمەتگوزاریەکان",
+      "staff": "ستاف",
+      "leads": "کڕیارە ئەگەرییەکان"
+    },
+    "kpi": {
+      "revenue": "داهات",
+      "patients": "نەخۆشەکان",
+      "appointments": "مەوعیدەکان",
+      "leads": "کڕیارە ئەگەرییەکان",
+      "new": "نوێ",
+      "completionRate": "ڕێژەی تەواوبوون",
+      "conversionRate": "ڕێژەی گۆڕین"
+    },
+    "revenue": {
+      "trend": "ڕەوتی داهات",
+      "total": "کۆی داهات",
+      "amount": "بڕ",
+      "byPaymentMethod": "داهات بە شێوازی پارەدان",
+      "byService": "داهات بە خزمەتگوزاری"
+    },
+    "patients": {
+      "summary": "کورتەی نەخۆشەکان",
+      "total": "کۆی نەخۆشەکان",
+      "new": "نەخۆشی نوێ",
+      "returning": "نەخۆشی گەڕاوە",
+      "trend": "ڕەوتی نەخۆشەکان",
+      "newPatientsOverTime": "نەخۆشە نوێیە تۆمارکراوەکان بەپێی کات",
+      "bySource": "نەخۆشەکان بە سەرچاوە",
+      "byGender": "نەخۆشەکان بە ڕەگەز",
+      "byBranch": "نەخۆشەکان بە لق",
+      "count": "ژمارە"
+    },
+    "appointments": {
+      "summary": "کورتەی مەوعیدەکان",
+      "total": "کۆی مەوعیدەکان",
+      "completed": "تەواوبوو",
+      "cancelled": "هەڵوەشاوەتەوە",
+      "noShow": "نەهات",
+      "avgWaitTime": "تێکڕای کاتی چاوەڕوانی",
+      "trend": "ڕەوتی مەوعیدەکان",
+      "completionRate": "ڕێژەی تەواوبوون",
+      "byStatus": "مەوعیدەکان بە دۆخ",
+      "byDoctor": "مەوعیدەکان بە پزیشک",
+      "count": "ژمارە"
+    },
+    "services": {
+      "performance": "کارایی خزمەتگوزاریەکان",
+      "revenueByService": "داهات بە خزمەتگوزاری",
+      "details": "وردەکاری خزمەتگوزاریەکان",
+      "name": "ناوی خزمەتگوزاری",
+      "appointments": "مەوعیدەکان",
+      "revenue": "داهات"
+    },
+    "staff": {
+      "productivity": "بەرهەمدارێتی ستاف",
+      "revenueByStaff": "داهات بە ئەندامی ستاف",
+      "details": "وردەکاری ستاف",
+      "name": "ناو",
+      "role": "ڕۆڵ",
+      "appointments": "مەوعیدەکان",
+      "avgPerDay": "تێکڕا/ڕۆژ",
+      "revenue": "داهات"
+    },
+    "leads": {
+      "funnel": "قیفی کڕیارە ئەگەرییەکان",
+      "stageBreakdown": "دابەشکردنی کڕیار بە قۆناغی ڕێگا",
+      "trend": "ڕەوتی کڕیارە ئەگەرییەکان",
+      "bySource": "کڕیارەکان بە سەرچاوە",
+      "stageSummary": "کورتەی قۆناغەکان",
+      "count": "ژمارە"
+    },
+    "export": {
+      "export": "هەناردەکردن",
+      "exporting": "هەناردەکردن...",
+      "csv": "هەناردەکردن وەک CSV",
+      "excel": "هەناردەکردن وەک Excel",
+      "pdf": "هەناردەکردن وەک PDF"
+    },
+    "noAccess": {
+      "title": "دەستڕاگەیشتن نییە",
+      "message": "مۆڵەتت نییە بۆ بینینی داتای شیکاری"
+    }
   },
   "errors": {
     "required": "ئەم خانەیە پێویستە",

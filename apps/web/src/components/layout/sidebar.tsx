@@ -21,6 +21,7 @@ import {
   ChevronRight,
   Building2,
   Bot,
+  BarChart3,
 } from 'lucide-react';
 
 interface NavItem {
@@ -39,6 +40,7 @@ const navItems: NavItem[] = [
   { title: 'navigation.inbox', href: '/inbox', icon: MessageSquare },
   { title: 'navigation.crm', href: '/crm', icon: Target, roles: ['ADMIN', 'MANAGER', 'SUPPORT', 'RECEPTION'] },
   { title: 'navigation.ai', href: '/ai', icon: Bot, roles: ['ADMIN', 'MANAGER', 'SUPPORT'] },
+  { title: 'navigation.analytics', href: '/analytics', icon: BarChart3, roles: ['ADMIN', 'MANAGER', 'ACCOUNTANT', 'RECEPTION', 'SUPPORT'] },
   { title: 'navigation.settings', href: '/settings', icon: Settings },
 ];
 
