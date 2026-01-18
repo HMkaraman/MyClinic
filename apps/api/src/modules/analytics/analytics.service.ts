@@ -13,12 +13,12 @@ interface DateRange {
   end: Date;
 }
 
-interface TrendDataPoint {
+export interface TrendDataPoint {
   date: string;
   value: number;
 }
 
-interface RevenueData {
+export interface RevenueData {
   total: number;
   trend: TrendDataPoint[];
   byPaymentMethod: { method: string; amount: number }[];
@@ -29,7 +29,7 @@ interface RevenueData {
   };
 }
 
-interface PatientStats {
+export interface PatientStats {
   total: number;
   new: number;
   returning: number;
@@ -39,7 +39,7 @@ interface PatientStats {
   byBranch: { branch: string; count: number }[];
 }
 
-interface AppointmentMetrics {
+export interface AppointmentMetrics {
   total: number;
   completed: number;
   cancelled: number;
@@ -51,7 +51,7 @@ interface AppointmentMetrics {
   averageWaitTime: number;
 }
 
-interface ServicePerformance {
+export interface ServicePerformance {
   services: {
     id: string;
     name: string;
@@ -61,7 +61,7 @@ interface ServicePerformance {
   }[];
 }
 
-interface StaffProductivity {
+export interface StaffProductivity {
   staff: {
     id: string;
     name: string;
@@ -72,7 +72,7 @@ interface StaffProductivity {
   }[];
 }
 
-interface LeadFunnel {
+export interface LeadFunnel {
   stages: {
     stage: string;
     count: number;
@@ -82,7 +82,7 @@ interface LeadFunnel {
   trend: TrendDataPoint[];
 }
 
-interface DashboardSummary {
+export interface DashboardSummary {
   revenue: {
     total: number;
     percentChange: number;

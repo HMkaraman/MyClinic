@@ -1,6 +1,7 @@
 import { Module, MiddlewareConsumer, NestModule } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 
 import { PrismaModule } from './prisma/prisma.module';
@@ -32,6 +33,9 @@ import { AiModule } from './modules/ai/ai.module';
 // Milestone 6 Modules
 import { AnalyticsModule } from './modules/analytics/analytics.module';
 
+// Milestone 7 Modules
+import { NotificationsModule } from './modules/notifications/notifications.module';
+
 import { JwtAuthGuard } from './modules/auth/guards/jwt-auth.guard';
 import { RolesGuard } from './modules/auth/guards/roles.guard';
 import { TenantGuard } from './modules/tenant/guards/tenant.guard';
@@ -53,6 +57,17 @@ import { AuditInterceptor } from './modules/audit/interceptors/audit.interceptor
         limit: 100, // 100 requests per minute
       },
     ]),
+
+    // Event Emitter for notifications
+    EventEmitterModule.forRoot({
+      wildcard: false,
+      delimiter: '.',
+      newListener: false,
+      removeListener: false,
+      maxListeners: 10,
+      verboseMemoryLeak: true,
+      ignoreErrors: false,
+    }),
 
     // Core Infrastructure
     PrismaModule,
@@ -85,6 +100,9 @@ import { AuditInterceptor } from './modules/audit/interceptors/audit.interceptor
 
     // Feature Modules - Milestone 6
     AnalyticsModule,
+
+    // Feature Modules - Milestone 7
+    NotificationsModule,
   ],
   controllers: [],
   providers: [

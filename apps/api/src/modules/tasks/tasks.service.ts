@@ -3,12 +3,14 @@ import {
   NotFoundException,
   ForbiddenException,
 } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Prisma, Role, TaskStatus } from '@prisma/client';
 
 import { PrismaService } from '../../prisma/prisma.service';
 import { ActivityService } from '../activity/activity.service';
 import { CreateTaskDto, UpdateTaskDto, QueryTasksDto } from './dto';
 import { JwtPayload } from '../auth/decorators/current-user.decorator';
+import { NOTIFICATION_EVENTS } from '../notifications/events/notification.events';
 
 const ADMIN_ROLES: Role[] = [Role.ADMIN, Role.MANAGER];
 
@@ -17,6 +19,7 @@ export class TasksService {
   constructor(
     private prisma: PrismaService,
     private activityService: ActivityService,
+    private eventEmitter: EventEmitter2,
   ) {}
 
   async findAll(user: JwtPayload, query: QueryTasksDto) {
@@ -175,6 +178,21 @@ export class TasksService {
       { taskId: task.id, title: task.title, assignedTo: task.assignedTo },
     );
 
+    // Emit notification event for assignee (only if assigned to someone else)
+    if (dto.assignedTo !== user.sub) {
+      this.eventEmitter.emit(NOTIFICATION_EVENTS.TASK_ASSIGNED, {
+        tenantId: user.tenantId,
+        recipientUserIds: [dto.assignedTo],
+        taskId: task.id,
+        taskTitle: task.title,
+        assignedById: user.sub,
+        assignedByName: task.creator?.name || 'Unknown',
+        dueDate: task.dueDate,
+        entityType: task.entityType,
+        entityId: task.entityId,
+      });
+    }
+
     return task;
   }
 
@@ -266,6 +284,25 @@ export class TasksService {
       user.sub,
       { taskId: updatedTask.id, from: task.status, to: status },
     );
+
+    // Emit notification event when task is completed (notify the creator)
+    if (status === TaskStatus.COMPLETED && task.createdBy !== user.sub) {
+      const completingUser = await this.prisma.user.findUnique({
+        where: { id: user.sub },
+        select: { name: true },
+      });
+
+      this.eventEmitter.emit(NOTIFICATION_EVENTS.TASK_COMPLETED, {
+        tenantId: user.tenantId,
+        recipientUserIds: [task.createdBy],
+        taskId: task.id,
+        taskTitle: task.title,
+        completedById: user.sub,
+        completedByName: completingUser?.name || 'Unknown',
+        entityType: task.entityType,
+        entityId: task.entityId,
+      });
+    }
 
     return updatedTask;
   }

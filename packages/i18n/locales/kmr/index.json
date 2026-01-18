@@ -367,6 +367,50 @@
       "message": "Tu destûra te nîne ku daneyên analîtîkê bibînî"
     }
   },
+  "notifications": {
+    "title": "Agahdarî",
+    "empty": "Tu agahdarî tune",
+    "markAllRead": "Hemûyan wek xwendî nîşan bide",
+    "settings": "Mîheng",
+    "delete": "Jêbibe",
+    "loadMore": "Zêdetir bar bike",
+    "unreadCount": "{count, plural, =1 {# nexwendî} other {# nexwendî}}",
+    "types": {
+      "appointmentCreated": "Randevûya Nû",
+      "appointmentCancelled": "Randevû Betal Kir",
+      "appointmentRescheduled": "Randevû Guherî",
+      "taskAssigned": "Peywir Hat Dayîn",
+      "taskCompleted": "Peywir Qediya",
+      "leadStageChanged": "Mişterî Hat Nûkirin",
+      "invoicePaid": "Fatûre Hate Dayîn",
+      "invoiceOverdue": "Fatûra Derengmayî",
+      "messageReceived": "Peyama Nû",
+      "system": "Agahdariya Sîstemê"
+    },
+    "preferences": {
+      "appointments": "Randevû",
+      "appointmentsDescription": "Agahdarî derbarê guherandinên randevûyan",
+      "appointmentCreated": "Randevûyên nû yên ji bo te hatine plankirin",
+      "appointmentCancelled": "Randevûyên betalkirî",
+      "appointmentRescheduled": "Randevûyên guherî",
+      "tasks": "Peywir",
+      "tasksDescription": "Agahdarî derbarê dayîna peywiyan",
+      "taskAssigned": "Peywirên ku ji te re hatine dayîn",
+      "taskCompleted": "Peywirên ku ji hêla endamên tîmê ve qediyane",
+      "crm": "Birêvebirina Têkiliyên Mişterî",
+      "crmDescription": "Agahdarî derbarê mişteriyên muhtemel û peyaman",
+      "leadStageChanged": "Guherandinên qonaxa mişteriyê",
+      "messageReceived": "Peyamên nû yên hatine",
+      "billing": "Fatûrekirin",
+      "billingDescription": "Agahdarî derbarê fatûreyan",
+      "invoicePaid": "Dayînên fatûreyan",
+      "invoiceOverdue": "Fatûreyên derengmayî",
+      "system": "Sîstem",
+      "systemDescription": "Agahdariyên asta sîstemê",
+      "systemNotifications": "Ragihandin û nûvekirinên sîstemê",
+      "save": "Vebijarkên Hilgirtin"
+    }
+  },
   "errors": {
     "required": "Ev qad pêwîst e",
     "invalidEmail": "E-nameya nederbasdar",

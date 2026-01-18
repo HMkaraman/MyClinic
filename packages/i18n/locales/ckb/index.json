@@ -367,6 +367,50 @@
       "message": "مۆڵەتت نییە بۆ بینینی داتای شیکاری"
     }
   },
+  "notifications": {
+    "title": "ئاگادارییەکان",
+    "empty": "هیچ ئاگاداریێک نییە",
+    "markAllRead": "هەموو وەک خوێندراوەتەوە دیاریبکە",
+    "settings": "ڕێکخستنەکان",
+    "delete": "سڕینەوە",
+    "loadMore": "زیاتر بار بکە",
+    "unreadCount": "{count, plural, =1 {# نەخوێندراوە} other {# نەخوێندراوەتەوە}}",
+    "types": {
+      "appointmentCreated": "مەودای نوێ",
+      "appointmentCancelled": "مەوداکە هەڵوەشاوەتەوە",
+      "appointmentRescheduled": "مەوداکە گۆڕدراوە",
+      "taskAssigned": "ئەرکی پەیوەستکراو",
+      "taskCompleted": "ئەرکی تەواوبوو",
+      "leadStageChanged": "نوێکردنەوەی کڕیاری ئەگەری",
+      "invoicePaid": "وەسڵی دراو",
+      "invoiceOverdue": "وەسڵی دواکەوتوو",
+      "messageReceived": "نامەی نوێ",
+      "system": "ئاگاداری سیستەم"
+    },
+    "preferences": {
+      "appointments": "مەودایەکان",
+      "appointmentsDescription": "ئاگادارییەکان دەربارەی گۆڕانکارییەکانی مەودا",
+      "appointmentCreated": "مەودایە نوێیەکانی بۆ تۆ ڕێکخراون",
+      "appointmentCancelled": "مەودایە هەڵوەشێنراوەکان",
+      "appointmentRescheduled": "مەودایە گۆڕدراوەکان",
+      "tasks": "ئەرکەکان",
+      "tasksDescription": "ئاگادارییەکان دەربارەی دابەشکردنی ئەرک",
+      "taskAssigned": "ئەرکەکان کە بۆ تۆ دیاریکراون",
+      "taskCompleted": "ئەرکەکان کە لە لایەن ئەندامانی تیمەوە تەواوبوون",
+      "crm": "بەڕێوەبردنی پەیوەندی کڕیار",
+      "crmDescription": "ئاگادارییەکان دەربارەی کڕیارە ئەگەرییەکان و نامەکان",
+      "leadStageChanged": "گۆڕانکارییەکانی قۆناغی کڕیاری ئەگەری",
+      "messageReceived": "نامە نوێیەکانی وەرگیراو",
+      "billing": "وەسڵنامەکردن",
+      "billingDescription": "ئاگادارییەکان دەربارەی وەسڵەکان",
+      "invoicePaid": "پارەدانەکانی وەسڵ",
+      "invoiceOverdue": "وەسڵە دواکەوتووەکان",
+      "system": "سیستەم",
+      "systemDescription": "ئاگادارییەکانی ئاستی سیستەم",
+      "systemNotifications": "ڕاگەیاندن و نوێکردنەوەکانی سیستەم",
+      "save": "هەڵگرتنی ئارەزووەکان"
+    }
+  },
   "errors": {
     "required": "ئەم خانەیە پێویستە",
     "invalidEmail": "ئیمەیڵ نادروستە",

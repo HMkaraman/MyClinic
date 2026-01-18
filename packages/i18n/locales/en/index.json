@@ -404,6 +404,50 @@
       "message": "You don't have permission to view analytics data"
     }
   },
+  "notifications": {
+    "title": "Notifications",
+    "empty": "No notifications",
+    "markAllRead": "Mark all read",
+    "settings": "Settings",
+    "delete": "Delete",
+    "loadMore": "Load more",
+    "unreadCount": "{count, plural, =1 {# unread} other {# unread}}",
+    "types": {
+      "appointmentCreated": "New Appointment",
+      "appointmentCancelled": "Appointment Cancelled",
+      "appointmentRescheduled": "Appointment Rescheduled",
+      "taskAssigned": "Task Assigned",
+      "taskCompleted": "Task Completed",
+      "leadStageChanged": "Lead Updated",
+      "invoicePaid": "Invoice Paid",
+      "invoiceOverdue": "Invoice Overdue",
+      "messageReceived": "New Message",
+      "system": "System Notification"
+    },
+    "preferences": {
+      "appointments": "Appointments",
+      "appointmentsDescription": "Notifications about appointment changes",
+      "appointmentCreated": "New appointments scheduled for you",
+      "appointmentCancelled": "Cancelled appointments",
+      "appointmentRescheduled": "Rescheduled appointments",
+      "tasks": "Tasks",
+      "tasksDescription": "Notifications about task assignments",
+      "taskAssigned": "Tasks assigned to you",
+      "taskCompleted": "Tasks completed by team members",
+      "crm": "CRM",
+      "crmDescription": "Notifications about leads and messages",
+      "leadStageChanged": "Lead stage changes",
+      "messageReceived": "New messages received",
+      "billing": "Billing",
+      "billingDescription": "Notifications about invoices",
+      "invoicePaid": "Invoice payments",
+      "invoiceOverdue": "Overdue invoices",
+      "system": "System",
+      "systemDescription": "System-level notifications",
+      "systemNotifications": "System announcements and updates",
+      "save": "Save Preferences"
+    }
+  },
   "errors": {
     "required": "This field is required",
     "invalidEmail": "Invalid email address",

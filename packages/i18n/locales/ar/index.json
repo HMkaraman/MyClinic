@@ -404,6 +404,50 @@
       "message": "ليس لديك صلاحية لعرض بيانات التحليلات"
     }
   },
+  "notifications": {
+    "title": "الإشعارات",
+    "empty": "لا توجد إشعارات",
+    "markAllRead": "تحديد الكل كمقروء",
+    "settings": "الإعدادات",
+    "delete": "حذف",
+    "loadMore": "تحميل المزيد",
+    "unreadCount": "{count, plural, =1 {# غير مقروء} other {# غير مقروءة}}",
+    "types": {
+      "appointmentCreated": "موعد جديد",
+      "appointmentCancelled": "موعد ملغى",
+      "appointmentRescheduled": "موعد معاد جدولته",
+      "taskAssigned": "مهمة مسندة",
+      "taskCompleted": "مهمة مكتملة",
+      "leadStageChanged": "تحديث عميل محتمل",
+      "invoicePaid": "فاتورة مدفوعة",
+      "invoiceOverdue": "فاتورة متأخرة",
+      "messageReceived": "رسالة جديدة",
+      "system": "إشعار النظام"
+    },
+    "preferences": {
+      "appointments": "المواعيد",
+      "appointmentsDescription": "إشعارات حول تغييرات المواعيد",
+      "appointmentCreated": "المواعيد الجديدة المجدولة لك",
+      "appointmentCancelled": "المواعيد الملغاة",
+      "appointmentRescheduled": "المواعيد المعاد جدولتها",
+      "tasks": "المهام",
+      "tasksDescription": "إشعارات حول إسناد المهام",
+      "taskAssigned": "المهام المسندة إليك",
+      "taskCompleted": "المهام المكتملة من قبل أعضاء الفريق",
+      "crm": "إدارة علاقات العملاء",
+      "crmDescription": "إشعارات حول العملاء المحتملين والرسائل",
+      "leadStageChanged": "تغييرات مرحلة العميل المحتمل",
+      "messageReceived": "الرسائل الجديدة المستلمة",
+      "billing": "الفوترة",
+      "billingDescription": "إشعارات حول الفواتير",
+      "invoicePaid": "مدفوعات الفواتير",
+      "invoiceOverdue": "الفواتير المتأخرة",
+      "system": "النظام",
+      "systemDescription": "إشعارات على مستوى النظام",
+      "systemNotifications": "إعلانات وتحديثات النظام",
+      "save": "حفظ التفضيلات"
+    }
+  },
   "errors": {
     "required": "هذا الحقل مطلوب",
     "invalidEmail": "البريد الإلكتروني غير صالح",

@@ -4,10 +4,12 @@ import {
   BadRequestException,
   ForbiddenException,
 } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Prisma, AppointmentStatus, Role } from '@prisma/client';
 
 import { PrismaService } from '../../prisma/prisma.service';
 import { ActivityService } from '../activity/activity.service';
+import { NOTIFICATION_EVENTS } from '../notifications/events/notification.events';
 import {
   CreateAppointmentDto,
   UpdateAppointmentDto,
@@ -55,6 +57,7 @@ export class AppointmentsService {
   constructor(
     private prisma: PrismaService,
     private activityService: ActivityService,
+    private eventEmitter: EventEmitter2,
   ) {}
 
   async findAll(user: JwtPayload, query: QueryAppointmentsDto) {
@@ -357,6 +360,20 @@ export class AppointmentsService {
       },
     );
 
+    // Emit notification event for the assigned doctor
+    this.eventEmitter.emit(NOTIFICATION_EVENTS.APPOINTMENT_CREATED, {
+      tenantId: user.tenantId,
+      recipientUserIds: [dto.doctorId],
+      appointmentId: appointment.id,
+      patientName: patient.name,
+      doctorId: dto.doctorId,
+      doctorName: doctor.name,
+      scheduledAt: new Date(dto.scheduledAt),
+      serviceName: service.name,
+      entityType: 'appointment',
+      entityId: appointment.id,
+    });
+
     return appointment;
   }
 
@@ -524,6 +541,21 @@ export class AppointmentsService {
       },
     );
 
+    // Emit notification event
+    this.eventEmitter.emit(NOTIFICATION_EVENTS.APPOINTMENT_RESCHEDULED, {
+      tenantId: user.tenantId,
+      recipientUserIds: [appointment.doctorId],
+      appointmentId: id,
+      newAppointmentId: newAppointment.id,
+      patientName: appointment.patient.name,
+      doctorId: appointment.doctorId,
+      oldScheduledAt: appointment.scheduledAt,
+      newScheduledAt: new Date(dto.newScheduledAt),
+      reason: dto.reason,
+      entityType: 'appointment',
+      entityId: newAppointment.id,
+    });
+
     return newAppointment;
   }
 
@@ -568,6 +600,18 @@ export class AppointmentsService {
       user.sub,
       { reason: dto.reason },
     );
+
+    // Emit notification event
+    this.eventEmitter.emit(NOTIFICATION_EVENTS.APPOINTMENT_CANCELLED, {
+      tenantId: user.tenantId,
+      recipientUserIds: [appointment.doctorId],
+      appointmentId: id,
+      patientName: appointment.patient.name,
+      doctorId: appointment.doctorId,
+      cancelReason: dto.reason,
+      entityType: 'appointment',
+      entityId: id,
+    });
 
     return updated;
   }

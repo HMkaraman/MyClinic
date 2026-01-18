@@ -19,7 +19,6 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import {
-  Bell,
   Search,
   LogOut,
   User,
@@ -29,6 +28,7 @@ import {
   Moon,
   Menu,
 } from 'lucide-react';
+import { NotificationBell } from '@/components/notifications';
 
 const locales = [
   { code: 'ar', name: 'العربية', dir: 'rtl' },
@@ -109,9 +109,7 @@ export function Header({ onMenuClick }: HeaderProps) {
         </Button>
 
         {/* Notifications */}
-        <Button variant="ghost" size="icon">
-          <Bell className="h-5 w-5" />
-        </Button>
+        <NotificationBell />
 
         {/* User menu */}
         <DropdownMenu>
