@@ -489,50 +489,24 @@ async function main() {
   // Initialize Tenant Sequences
   // =============================================
 
-  // Initialize patient file number sequence (starting from 2 since we have 2 demo patients)
-  await prisma.tenantSequence.upsert({
-    where: {
-      tenantId_type_year_month: {
-        tenantId: tenant.id,
-        type: SequenceType.PATIENT_FILE_NUMBER,
-        year: null,
-        month: null,
-      },
-    },
-    update: { value: 2 },
-    create: {
-      tenantId: tenant.id,
-      type: SequenceType.PATIENT_FILE_NUMBER,
-      year: null,
-      month: null,
-      value: 2,
-    },
-  });
+  // Initialize sequences using raw SQL (Prisma doesn't support null in composite unique index lookups)
+  await prisma.$executeRaw`
+    INSERT INTO "tenant_sequences" ("id", "tenant_id", "type", "year", "month", "value", "updated_at")
+    VALUES (gen_random_uuid()::text, ${tenant.id}, 'PATIENT_FILE_NUMBER'::"SequenceType", NULL, NULL, 2, NOW())
+    ON CONFLICT ("tenant_id", "type", "year", "month") DO UPDATE SET "value" = 2
+  `;
   console.log('✓ Initialized patient file number sequence');
 
-  // Initialize invoice number sequence for current month (starting from 0)
+  // Initialize invoice number sequence for current month
   const now = new Date();
   const currentYear = now.getFullYear();
   const currentMonth = now.getMonth() + 1;
 
-  await prisma.tenantSequence.upsert({
-    where: {
-      tenantId_type_year_month: {
-        tenantId: tenant.id,
-        type: SequenceType.INVOICE_NUMBER,
-        year: currentYear,
-        month: currentMonth,
-      },
-    },
-    update: { value: 0 },
-    create: {
-      tenantId: tenant.id,
-      type: SequenceType.INVOICE_NUMBER,
-      year: currentYear,
-      month: currentMonth,
-      value: 0,
-    },
-  });
+  await prisma.$executeRaw`
+    INSERT INTO "tenant_sequences" ("id", "tenant_id", "type", "year", "month", "value", "updated_at")
+    VALUES (gen_random_uuid()::text, ${tenant.id}, 'INVOICE_NUMBER'::"SequenceType", ${currentYear}, ${currentMonth}, 0, NOW())
+    ON CONFLICT ("tenant_id", "type", "year", "month") DO UPDATE SET "value" = 0
+  `;
   console.log('✓ Initialized invoice number sequence');
 
   console.log('\n🎉 Database seed completed successfully!\n');
