@@ -77,10 +77,22 @@ export class AuthService {
 
     // Enforce 2FA for sensitive roles (ADMIN, MANAGER)
     if (SENSITIVE_ROLES.includes(user.role) && !user.twoFactorEnabled) {
+      // Generate a limited-scope setup token valid for 10 minutes
+      const setupToken = await this.jwtService.signAsync(
+        { sub: user.id, tenantId: user.tenantId, purpose: '2fa-setup' },
+        {
+          secret: this.configService.get<string>(
+            'JWT_SECRET',
+            'myclinic-jwt-secret',
+          ),
+          expiresIn: '10m',
+        },
+      );
+
       throw new ForbiddenException({
         code: '2FA_SETUP_REQUIRED',
-        message: 'Two-factor authentication must be enabled for your role. Please contact an administrator to set up 2FA.',
-        requiresSetup: true,
+        message: 'Two-factor authentication must be enabled for your role.',
+        setupToken,
       });
     }
 
@@ -320,6 +332,37 @@ export class AuthService {
         twoFactorSecret: null,
       },
     });
+  }
+
+  async generateTokensForUser(userId: string): Promise<AuthResponse> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+
+    const tokens = await this.generateTokens({
+      sub: user.id,
+      email: user.email,
+      tenantId: user.tenantId,
+      branchIds: user.branchIds,
+      role: user.role,
+    });
+
+    return {
+      ...tokens,
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        role: user.role,
+        tenantId: user.tenantId,
+        branchIds: user.branchIds,
+        twoFactorEnabled: user.twoFactorEnabled,
+      },
+    };
   }
 
   private async generateTokens(payload: JwtPayload): Promise<TokenPair> {

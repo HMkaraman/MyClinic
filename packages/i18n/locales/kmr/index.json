@@ -48,7 +48,22 @@
     "twoFactorCode": "Koda rastandinê",
     "twoFactorRequired": "Koda rastandinê ji sepana rastandinê binivîse",
     "invalidCredentials": "Agahî çewt in",
-    "sessionExpired": "Danişîn qediya, ji kerema xwe dîsa têkeve"
+    "sessionExpired": "Danişîn qediya, ji kerema xwe dîsa têkeve",
+    "loginDescription": "Agahiyên xwe binivîse da ku bikevî hesabê xwe",
+    "loginButton": "Têkeve",
+    "twoFactorAuth": "Rastandina Du-Gav",
+    "enter2FACode": "Koda 6 jimarî ji sepana rastandinê binivîse",
+    "verificationCode": "Koda Rastandinê",
+    "verify": "Rast bike",
+    "twoFactorSetup": "Sazkirina Rastandina Du-Gav",
+    "twoFactorSetupRequired": "Rola te hewce dike ku rastandina du-gav çalak bike. Ji kerema xwe saz bike da ku berdewam bikî.",
+    "scanQRCode": "Vê koda QR bi sepana rastandinê (Google Authenticator, Authy, hwd.) bişkîne",
+    "orEnterManually": "An jî vê kilîtê bi destan binivîse:",
+    "enterSetupCode": "Koda 6 jimarî ji sepana rastandinê binivîse da ku sazkirinê rast bikî",
+    "completeSetup": "Sazkirinê Temam Bike",
+    "setupSuccess": "Rastandina du-gav bi serkeftî çalak bû",
+    "backToLogin": "Vegere têketinê",
+    "invalidCode": "Koda rastandinê nederbasdar e. Ji kerema xwe dîsa biceribîne."
   },
   "navigation": {
     "dashboard": "Daşbord",

@@ -22,6 +22,12 @@ interface AuthState {
   requires2FA: boolean;
   tempToken: string | null;
 
+  // 2FA Setup state
+  requires2FASetup: boolean;
+  setupToken: string | null;
+  qrCode: string | null;
+  secret: string | null;
+
   // Actions
   login: (data: LoginRequest) => Promise<boolean>;
   verify2FA: (code: string) => Promise<boolean>;
@@ -29,6 +35,11 @@ interface AuthState {
   refreshAuth: () => Promise<boolean>;
   setUser: (user: User | null) => void;
   reset: () => void;
+
+  // 2FA Setup actions
+  initiate2FASetup: () => Promise<void>;
+  complete2FASetup: (code: string) => Promise<void>;
+  cancelSetup: () => void;
 }
 
 const initialState = {
@@ -39,6 +50,12 @@ const initialState = {
   isLoading: false,
   requires2FA: false,
   tempToken: null,
+
+  // 2FA Setup state
+  requires2FASetup: false,
+  setupToken: null,
+  qrCode: null,
+  secret: null,
 };
 
 export const useAuthStore = create<AuthState>()(
@@ -71,9 +88,20 @@ export const useAuthStore = create<AuthState>()(
             tempToken: null,
           });
           return true;
-        } catch {
+        } catch (error: unknown) {
           set({ isLoading: false });
-          throw new Error('Invalid credentials');
+
+          // Check if this is a 2FA_SETUP_REQUIRED error
+          const err = error as { code?: string; setupToken?: string; message?: string };
+          if (err.code === '2FA_SETUP_REQUIRED' && err.setupToken) {
+            set({
+              requires2FASetup: true,
+              setupToken: err.setupToken,
+            });
+            return true;
+          }
+
+          throw new Error(err.message || 'Invalid credentials');
         }
       },
 
@@ -138,6 +166,64 @@ export const useAuthStore = create<AuthState>()(
       reset: () => {
         api.setAccessToken(null);
         set(initialState);
+      },
+
+      // 2FA Setup actions
+      initiate2FASetup: async () => {
+        const { setupToken } = get();
+        if (!setupToken) {
+          throw new Error('No setup token available');
+        }
+
+        set({ isLoading: true });
+        try {
+          const { qrCode, secret } = await authApi.setup2FA(setupToken);
+          set({ isLoading: false, qrCode, secret });
+        } catch (error: unknown) {
+          set({ isLoading: false });
+          const err = error as { message?: string };
+          throw new Error(err.message || 'Failed to setup 2FA');
+        }
+      },
+
+      complete2FASetup: async (code: string) => {
+        const { setupToken } = get();
+        if (!setupToken) {
+          throw new Error('No setup token available');
+        }
+
+        set({ isLoading: true });
+        try {
+          const response = await authApi.verify2FASetup(setupToken, code);
+
+          // Complete login with returned tokens
+          api.setAccessToken(response.accessToken);
+
+          set({
+            isLoading: false,
+            isAuthenticated: true,
+            user: response.user || null,
+            accessToken: response.accessToken,
+            refreshToken: response.refreshToken,
+            requires2FASetup: false,
+            setupToken: null,
+            qrCode: null,
+            secret: null,
+          });
+        } catch (error: unknown) {
+          set({ isLoading: false });
+          const err = error as { message?: string };
+          throw new Error(err.message || 'Invalid verification code');
+        }
+      },
+
+      cancelSetup: () => {
+        set({
+          requires2FASetup: false,
+          setupToken: null,
+          qrCode: null,
+          secret: null,
+        });
       },
     }),
     {

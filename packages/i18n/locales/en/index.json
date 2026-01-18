@@ -58,7 +58,16 @@
     "twoFactorAuth": "Two-Factor Authentication",
     "enter2FACode": "Enter the 6-digit code from your authenticator app",
     "verificationCode": "Verification Code",
-    "verify": "Verify"
+    "verify": "Verify",
+    "twoFactorSetup": "Two-Factor Authentication Setup",
+    "twoFactorSetupRequired": "Your role requires two-factor authentication. Please set it up to continue.",
+    "scanQRCode": "Scan this QR code with your authenticator app (Google Authenticator, Authy, etc.)",
+    "orEnterManually": "Or enter this key manually:",
+    "enterSetupCode": "Enter the 6-digit code from your authenticator app to verify setup",
+    "completeSetup": "Complete Setup",
+    "setupSuccess": "Two-factor authentication enabled successfully",
+    "backToLogin": "Back to Login",
+    "invalidCode": "Invalid verification code. Please try again."
   },
   "dashboard": {
     "overview": "Here's what's happening in your clinic today",

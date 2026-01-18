@@ -58,7 +58,16 @@
     "twoFactorAuth": "التحقق بخطوتين",
     "enter2FACode": "أدخل الرمز المكون من 6 أرقام من تطبيق المصادقة",
     "verificationCode": "رمز التحقق",
-    "verify": "تحقق"
+    "verify": "تحقق",
+    "twoFactorSetup": "إعداد التحقق بخطوتين",
+    "twoFactorSetupRequired": "يتطلب دورك تفعيل التحقق بخطوتين. يرجى إعداده للمتابعة.",
+    "scanQRCode": "امسح رمز QR هذا باستخدام تطبيق المصادقة (Google Authenticator، Authy، إلخ.)",
+    "orEnterManually": "أو أدخل هذا المفتاح يدوياً:",
+    "enterSetupCode": "أدخل الرمز المكون من 6 أرقام من تطبيق المصادقة للتحقق من الإعداد",
+    "completeSetup": "إكمال الإعداد",
+    "setupSuccess": "تم تفعيل التحقق بخطوتين بنجاح",
+    "backToLogin": "العودة لتسجيل الدخول",
+    "invalidCode": "رمز التحقق غير صالح. يرجى المحاولة مرة أخرى."
   },
   "dashboard": {
     "overview": "إليك ما يحدث في عيادتك اليوم",

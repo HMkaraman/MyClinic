@@ -13,7 +13,7 @@ import { Loader2, Building2 } from 'lucide-react';
 export default function LoginPage() {
   const t = useTranslations();
   const router = useRouter();
-  const { login, isLoading, requires2FA, isAuthenticated } = useAuthStore();
+  const { login, isLoading, requires2FA, requires2FASetup, isAuthenticated } = useAuthStore();
 
   const [email, setEmail] = React.useState('');
   const [password, setPassword] = React.useState('');
@@ -24,8 +24,10 @@ export default function LoginPage() {
       router.push('/dashboard');
     } else if (requires2FA) {
       router.push('/auth/2fa');
+    } else if (requires2FASetup) {
+      router.push('/auth/2fa-setup');
     }
-  }, [isAuthenticated, requires2FA, router]);
+  }, [isAuthenticated, requires2FA, requires2FASetup, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

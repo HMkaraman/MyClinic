@@ -118,10 +118,57 @@ export interface RefreshTokenRequest {
   refreshToken: string;
 }
 
+export interface Setup2FAResponse {
+  qrCode: string;
+  secret: string;
+}
+
 export const authApi = {
   login: (data: LoginRequest) => api.post<LoginResponse>('/auth/login', data),
   verify2FA: (data: Verify2FARequest) => api.post<LoginResponse>('/auth/2fa/verify-login', data),
   refreshToken: (data: RefreshTokenRequest) => api.post<LoginResponse>('/auth/refresh', data),
   logout: () => api.post('/auth/logout'),
   getMe: () => api.get<LoginResponse['user']>('/auth/me'),
+
+  // 2FA Setup methods for ADMIN/MANAGER role enforcement
+  setup2FA: async (setupToken: string): Promise<Setup2FAResponse> => {
+    const response = await fetch(`${API_BASE_URL}/auth/2fa/setup-required`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${setupToken}`,
+      },
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({
+        message: 'Failed to setup 2FA',
+        statusCode: response.status,
+      }));
+      throw error;
+    }
+
+    return response.json();
+  },
+
+  verify2FASetup: async (setupToken: string, code: string): Promise<LoginResponse> => {
+    const response = await fetch(`${API_BASE_URL}/auth/2fa/verify-setup`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${setupToken}`,
+      },
+      body: JSON.stringify({ code }),
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({
+        message: 'Invalid verification code',
+        statusCode: response.status,
+      }));
+      throw error;
+    }
+
+    return response.json();
+  },
 };
