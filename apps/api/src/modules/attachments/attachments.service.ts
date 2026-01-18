@@ -288,8 +288,8 @@ export class AttachmentsService {
       }
 
       case AttachmentEntityType.VISIT: {
-        const visit = await this.prisma.visit.findUnique({
-          where: { id: entityId },
+        const visit = await this.prisma.visit.findFirst({
+          where: { id: entityId, tenantId: user.tenantId },
         });
         if (!visit) {
           throw new NotFoundException('Visit not found');
@@ -309,8 +309,8 @@ export class AttachmentsService {
       }
 
       case AttachmentEntityType.APPOINTMENT: {
-        const appointment = await this.prisma.appointment.findUnique({
-          where: { id: entityId },
+        const appointment = await this.prisma.appointment.findFirst({
+          where: { id: entityId, tenantId: user.tenantId },
         });
         if (!appointment) {
           throw new NotFoundException('Appointment not found');
@@ -326,8 +326,8 @@ export class AttachmentsService {
       }
 
       case AttachmentEntityType.INVOICE: {
-        const invoice = await this.prisma.invoice.findUnique({
-          where: { id: entityId },
+        const invoice = await this.prisma.invoice.findFirst({
+          where: { id: entityId, tenantId: user.tenantId },
         });
         if (!invoice) {
           throw new NotFoundException('Invoice not found');
@@ -342,15 +342,13 @@ export class AttachmentsService {
       }
 
       case AttachmentEntityType.CONVERSATION: {
-        const conversation = await this.prisma.conversation.findUnique({
-          where: { id: entityId },
+        const conversation = await this.prisma.conversation.findFirst({
+          where: { id: entityId, tenantId: user.tenantId },
         });
         if (!conversation) {
           throw new NotFoundException('Conversation not found');
         }
-        if (conversation.tenantId !== user.tenantId) {
-          throw new ForbiddenException('Access denied to this conversation');
-        }
+        // Tenant check is now built into the query above
         break;
       }
 

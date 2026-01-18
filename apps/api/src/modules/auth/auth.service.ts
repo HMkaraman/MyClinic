@@ -2,7 +2,9 @@ import {
   Injectable,
   UnauthorizedException,
   BadRequestException,
+  ForbiddenException,
 } from '@nestjs/common';
+import { Role } from '@prisma/client';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
@@ -31,6 +33,9 @@ export interface AuthResponse extends TokenPair {
     twoFactorEnabled: boolean;
   };
 }
+
+// Roles that require 2FA to be enabled
+const SENSITIVE_ROLES: Role[] = [Role.ADMIN, Role.MANAGER];
 
 @Injectable()
 export class AuthService {
@@ -68,6 +73,15 @@ export class AuthService {
     const isPasswordValid = await bcrypt.compare(dto.password, user.passwordHash);
     if (!isPasswordValid) {
       throw new UnauthorizedException('Invalid credentials');
+    }
+
+    // Enforce 2FA for sensitive roles (ADMIN, MANAGER)
+    if (SENSITIVE_ROLES.includes(user.role) && !user.twoFactorEnabled) {
+      throw new ForbiddenException({
+        code: '2FA_SETUP_REQUIRED',
+        message: 'Two-factor authentication must be enabled for your role. Please contact an administrator to set up 2FA.',
+        requiresSetup: true,
+      });
     }
 
     // Check if 2FA is enabled

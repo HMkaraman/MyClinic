@@ -19,6 +19,7 @@ import { AuthService } from './auth.service';
 import { LoginDto, RefreshTokenDto, Verify2FADto } from './dto';
 import { Public } from './decorators/public.decorator';
 import { CurrentUser, JwtPayload } from './decorators/current-user.decorator';
+import { Audit } from '../audit/decorators/audit.decorator';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -28,6 +29,7 @@ export class AuthController {
   @Post('login')
   @Public()
   @HttpCode(HttpStatus.OK)
+  @Audit({ action: 'LOGIN', entityType: 'User' })
   @ApiOperation({ summary: 'Login with email and password' })
   @ApiResponse({ status: 200, description: 'Login successful' })
   @ApiResponse({ status: 401, description: 'Invalid credentials' })
@@ -38,6 +40,7 @@ export class AuthController {
   @Post('logout')
   @ApiBearerAuth()
   @HttpCode(HttpStatus.OK)
+  @Audit({ action: 'LOGOUT', entityType: 'User' })
   @ApiOperation({ summary: 'Logout and invalidate token' })
   @ApiResponse({ status: 200, description: 'Logout successful' })
   async logout(@Req() request: Request) {
@@ -69,6 +72,7 @@ export class AuthController {
 
   @Post('2fa/setup')
   @ApiBearerAuth()
+  @Audit({ action: '2FA_SETUP', entityType: 'User' })
   @ApiOperation({ summary: 'Start 2FA setup process' })
   @ApiResponse({ status: 200, description: '2FA setup initiated' })
   @ApiResponse({ status: 400, description: '2FA already enabled' })
@@ -79,6 +83,7 @@ export class AuthController {
   @Post('2fa/verify')
   @ApiBearerAuth()
   @HttpCode(HttpStatus.OK)
+  @Audit({ action: '2FA_VERIFY', entityType: 'User' })
   @ApiOperation({ summary: 'Verify and activate 2FA' })
   @ApiResponse({ status: 200, description: '2FA enabled successfully' })
   @ApiResponse({ status: 400, description: 'Invalid code or setup expired' })
@@ -93,6 +98,7 @@ export class AuthController {
   @Post('2fa/disable')
   @ApiBearerAuth()
   @HttpCode(HttpStatus.OK)
+  @Audit({ action: '2FA_DISABLE', entityType: 'User' })
   @ApiOperation({ summary: 'Disable 2FA' })
   @ApiResponse({ status: 200, description: '2FA disabled successfully' })
   @ApiResponse({ status: 400, description: 'Invalid code or 2FA not enabled' })

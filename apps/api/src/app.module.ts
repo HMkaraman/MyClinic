@@ -40,6 +40,7 @@ import { JwtAuthGuard } from './modules/auth/guards/jwt-auth.guard';
 import { RolesGuard } from './modules/auth/guards/roles.guard';
 import { TenantGuard } from './modules/tenant/guards/tenant.guard';
 import { TenantMiddleware } from './modules/tenant/middleware/tenant.middleware';
+import { TenantContextMiddleware } from './common/middleware/tenant-context.middleware';
 import { AuditInterceptor } from './modules/audit/interceptors/audit.interceptor';
 
 @Module({
@@ -137,5 +138,7 @@ export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
     // Apply tenant middleware to all routes
     consumer.apply(TenantMiddleware).forRoutes('*');
+    // Apply tenant context middleware for AsyncLocalStorage propagation
+    consumer.apply(TenantContextMiddleware).forRoutes('*');
   }
 }

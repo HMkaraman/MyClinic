@@ -1,5 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { AppointmentStatus, Role } from '@prisma/client';
 
 import { AppointmentsService } from './appointments.service';
@@ -23,18 +24,23 @@ describe('AppointmentsService', () => {
   let service: AppointmentsService;
   let prisma: MockPrismaService;
   let activityService: jest.Mocked<ActivityService>;
+  let eventEmitter: jest.Mocked<EventEmitter2>;
 
   beforeEach(async () => {
     prisma = new MockPrismaService();
     activityService = {
       logAppointmentActivity: jest.fn().mockResolvedValue(undefined),
     } as unknown as jest.Mocked<ActivityService>;
+    eventEmitter = {
+      emit: jest.fn(),
+    } as unknown as jest.Mocked<EventEmitter2>;
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AppointmentsService,
         { provide: PrismaService, useValue: prisma },
         { provide: ActivityService, useValue: activityService },
+        { provide: EventEmitter2, useValue: eventEmitter },
       ],
     }).compile();
 
