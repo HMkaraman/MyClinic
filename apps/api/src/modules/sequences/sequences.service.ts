@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { SequenceType } from '@prisma/client';
+import { Prisma, SequenceType } from '@prisma/client';
 
 import { PrismaService } from '../../prisma/prisma.service';
 
@@ -9,7 +9,8 @@ export class SequencesService {
 
   /**
    * Atomically gets and increments the next value for a sequence.
-   * Uses INSERT ... ON CONFLICT DO UPDATE for atomic increment (upsert pattern).
+   * Uses UPDATE first, then INSERT if no row exists.
+   * This handles NULL values in year/month correctly (ON CONFLICT doesn't work with NULLs).
    */
   async getNextValue(
     tenantId: string,
@@ -17,26 +18,60 @@ export class SequencesService {
     year?: number,
     month?: number,
   ): Promise<number> {
-    // Use raw SQL for atomic increment with upsert
-    const result = await this.prisma.$queryRaw<{ value: number }[]>`
-      INSERT INTO "tenant_sequences" ("id", "tenant_id", "type", "year", "month", "value", "updated_at")
-      VALUES (
-        gen_random_uuid()::text,
-        ${tenantId},
-        ${type}::"SequenceType",
-        ${year ?? null}::int,
-        ${month ?? null}::int,
-        1,
-        NOW()
-      )
-      ON CONFLICT ("tenant_id", "type", "year", "month")
-      DO UPDATE SET
-        "value" = "tenant_sequences"."value" + 1,
-        "updated_at" = NOW()
+    const yearVal = year ?? null;
+    const monthVal = month ?? null;
+    // Use Prisma.raw for enum to avoid parameter casting issues
+    const typeSql = Prisma.raw(`'${type}'::"SequenceType"`);
+
+    // Try to update existing sequence first using IS NOT DISTINCT FROM for NULL comparison
+    const updateResult = await this.prisma.$queryRaw<{ value: number }[]>`
+      UPDATE "tenant_sequences"
+      SET "value" = "value" + 1, "updated_at" = NOW()
+      WHERE "tenant_id" = ${tenantId}
+        AND "type" = ${typeSql}
+        AND "year" IS NOT DISTINCT FROM ${yearVal}::int
+        AND "month" IS NOT DISTINCT FROM ${monthVal}::int
       RETURNING "value"
     `;
 
-    return result[0].value;
+    if (updateResult.length > 0) {
+      return updateResult[0].value;
+    }
+
+    // If no row exists, insert a new one
+    try {
+      const insertResult = await this.prisma.$queryRaw<{ value: number }[]>`
+        INSERT INTO "tenant_sequences" ("id", "tenant_id", "type", "year", "month", "value", "updated_at")
+        VALUES (
+          gen_random_uuid()::text,
+          ${tenantId},
+          ${typeSql},
+          ${yearVal}::int,
+          ${monthVal}::int,
+          1,
+          NOW()
+        )
+        RETURNING "value"
+      `;
+      return insertResult[0].value;
+    } catch (error: unknown) {
+      // Handle race condition: if insert fails due to unique constraint, retry update
+      if (error instanceof Error && error.message.includes('unique constraint')) {
+        const retryResult = await this.prisma.$queryRaw<{ value: number }[]>`
+          UPDATE "tenant_sequences"
+          SET "value" = "value" + 1, "updated_at" = NOW()
+          WHERE "tenant_id" = ${tenantId}
+            AND "type" = ${typeSql}
+            AND "year" IS NOT DISTINCT FROM ${yearVal}::int
+            AND "month" IS NOT DISTINCT FROM ${monthVal}::int
+          RETURNING "value"
+        `;
+        if (retryResult.length > 0) {
+          return retryResult[0].value;
+        }
+      }
+      throw error;
+    }
   }
 
   /**
