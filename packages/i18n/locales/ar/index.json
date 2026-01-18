@@ -36,7 +36,11 @@
     "success": "تمت العملية بنجاح",
     "error": "حدث خطأ",
     "required": "مطلوب",
-    "optional": "اختياري"
+    "optional": "اختياري",
+    "welcome": "مرحباً",
+    "language": "اللغة",
+    "viewAll": "عرض الكل",
+    "view": "عرض"
   },
   "auth": {
     "login": "تسجيل الدخول",
@@ -48,7 +52,37 @@
     "twoFactorCode": "رمز التحقق",
     "twoFactorRequired": "أدخل رمز التحقق من تطبيق المصادقة",
     "invalidCredentials": "بيانات الدخول غير صحيحة",
-    "sessionExpired": "انتهت الجلسة، يرجى تسجيل الدخول مجدداً"
+    "sessionExpired": "انتهت الجلسة، يرجى تسجيل الدخول مجدداً",
+    "loginDescription": "أدخل بيانات الاعتماد للوصول إلى حسابك",
+    "loginButton": "دخول",
+    "twoFactorAuth": "التحقق بخطوتين",
+    "enter2FACode": "أدخل الرمز المكون من 6 أرقام من تطبيق المصادقة",
+    "verificationCode": "رمز التحقق",
+    "verify": "تحقق"
+  },
+  "dashboard": {
+    "overview": "إليك ما يحدث في عيادتك اليوم",
+    "todayAppointments": "مواعيد اليوم",
+    "totalPatients": "إجمالي المرضى",
+    "todayRevenue": "إيرادات اليوم",
+    "conversionRate": "معدل التحويل",
+    "fromYesterday": "من أمس",
+    "thisMonth": "هذا الشهر",
+    "thisWeek": "هذا الأسبوع",
+    "todaySchedule": "جدول اليوم",
+    "upcomingAppointments": "المواعيد القادمة لهذا اليوم",
+    "pendingTasks": "المهام المعلقة",
+    "followUpReminder": "تذكيرات المتابعة",
+    "patientsNeedFollowUp": "مريض يحتاج متابعة",
+    "unpaidInvoices": "فواتير غير مدفوعة",
+    "invoicesPending": "فاتورة بانتظار الدفع",
+    "newLeads": "عملاء محتملون جدد",
+    "leadsToContact": "عميل للتواصل",
+    "quickStats": "إحصائيات سريعة",
+    "completed": "مكتمل",
+    "waiting": "بانتظار",
+    "noShow": "لم يحضر",
+    "upcoming": "قادم"
   },
   "navigation": {
     "dashboard": "لوحة التحكم",
@@ -65,7 +99,9 @@
     "settings": "الإعدادات",
     "users": "المستخدمون",
     "services": "الخدمات",
-    "branches": "الفروع"
+    "branches": "الفروع",
+    "profile": "الملف الشخصي",
+    "ai": "المساعد الذكي"
   },
   "patients": {
     "title": "المرضى",
@@ -86,6 +122,7 @@
   },
   "appointments": {
     "title": "المواعيد",
+    "new": "موعد جديد",
     "newAppointment": "موعد جديد",
     "selectPatient": "اختر المريض",
     "selectDoctor": "اختر الطبيب",
@@ -102,7 +139,8 @@
       "completed": "مكتمل",
       "noShow": "لم يحضر",
       "cancelled": "ملغي",
-      "rescheduled": "أُعيد جدولته"
+      "rescheduled": "أُعيد جدولته",
+      "pending": "قيد الانتظار"
     },
     "confirmArrival": "تأكيد الحضور",
     "startVisit": "بدء الزيارة",

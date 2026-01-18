@@ -36,7 +36,11 @@
     "success": "Operation successful",
     "error": "An error occurred",
     "required": "Required",
-    "optional": "Optional"
+    "optional": "Optional",
+    "welcome": "Welcome",
+    "language": "Language",
+    "viewAll": "View All",
+    "view": "View"
   },
   "auth": {
     "login": "Login",
@@ -48,7 +52,37 @@
     "twoFactorCode": "Verification code",
     "twoFactorRequired": "Enter the verification code from your authenticator app",
     "invalidCredentials": "Invalid credentials",
-    "sessionExpired": "Session expired, please login again"
+    "sessionExpired": "Session expired, please login again",
+    "loginDescription": "Enter your credentials to access your account",
+    "loginButton": "Sign In",
+    "twoFactorAuth": "Two-Factor Authentication",
+    "enter2FACode": "Enter the 6-digit code from your authenticator app",
+    "verificationCode": "Verification Code",
+    "verify": "Verify"
+  },
+  "dashboard": {
+    "overview": "Here's what's happening in your clinic today",
+    "todayAppointments": "Today's Appointments",
+    "totalPatients": "Total Patients",
+    "todayRevenue": "Today's Revenue",
+    "conversionRate": "Conversion Rate",
+    "fromYesterday": "from yesterday",
+    "thisMonth": "this month",
+    "thisWeek": "this week",
+    "todaySchedule": "Today's Schedule",
+    "upcomingAppointments": "Upcoming appointments for today",
+    "pendingTasks": "Pending Tasks",
+    "followUpReminder": "Follow-up Reminders",
+    "patientsNeedFollowUp": "patients need follow-up",
+    "unpaidInvoices": "Unpaid Invoices",
+    "invoicesPending": "invoices pending payment",
+    "newLeads": "New Leads",
+    "leadsToContact": "leads to contact",
+    "quickStats": "Quick Stats",
+    "completed": "Completed",
+    "waiting": "Waiting",
+    "noShow": "No Show",
+    "upcoming": "Upcoming"
   },
   "navigation": {
     "dashboard": "Dashboard",
@@ -65,7 +99,9 @@
     "settings": "Settings",
     "users": "Users",
     "services": "Services",
-    "branches": "Branches"
+    "branches": "Branches",
+    "profile": "Profile",
+    "ai": "AI Assistant"
   },
   "patients": {
     "title": "Patients",
@@ -86,6 +122,7 @@
   },
   "appointments": {
     "title": "Appointments",
+    "new": "New Appointment",
     "newAppointment": "New Appointment",
     "selectPatient": "Select Patient",
     "selectDoctor": "Select Doctor",
@@ -102,7 +139,8 @@
       "completed": "Completed",
       "noShow": "No Show",
       "cancelled": "Cancelled",
-      "rescheduled": "Rescheduled"
+      "rescheduled": "Rescheduled",
+      "pending": "Pending"
     },
     "confirmArrival": "Confirm Arrival",
     "startVisit": "Start Visit",
