@@ -72,9 +72,11 @@ export class AppointmentsService {
     } = query;
     const skip = (page! - 1) * limit!;
 
-    const where: Prisma.AppointmentWhereInput = {};
+    const where: Prisma.AppointmentWhereInput = {
+      tenantId: user.tenantId, // Always scope to tenant
+    };
 
-    // Branch scoping
+    // Branch scoping - only bypass for admin roles
     if (branchId) {
       where.branchId = branchId;
     } else if (
@@ -148,8 +150,11 @@ export class AppointmentsService {
   }
 
   async findById(user: JwtPayload, id: string) {
-    const appointment = await this.prisma.appointment.findUnique({
-      where: { id },
+    const appointment = await this.prisma.appointment.findFirst({
+      where: {
+        id,
+        tenantId: user.tenantId, // Always scope to tenant
+      },
       include: {
         patient: {
           select: { id: true, name: true, phone: true, fileNumber: true },
@@ -198,6 +203,7 @@ export class AppointmentsService {
 
     // Get existing appointments for the day
     const where: Prisma.AppointmentWhereInput = {
+      tenantId: user.tenantId, // Always scope to tenant
       scheduledAt: {
         gte: dateStart,
         lt: dateEnd,
@@ -311,6 +317,7 @@ export class AppointmentsService {
 
     const appointment = await this.prisma.appointment.create({
       data: {
+        tenantId: user.tenantId,
         branchId: dto.branchId,
         patientId: dto.patientId,
         doctorId: dto.doctorId,
@@ -338,6 +345,7 @@ export class AppointmentsService {
 
     // Log activity
     await this.activityService.logAppointmentActivity(
+      user.tenantId,
       appointment.id,
       'created',
       user.sub,
@@ -389,6 +397,7 @@ export class AppointmentsService {
 
     // Log activity
     await this.activityService.logAppointmentActivity(
+      user.tenantId,
       id,
       'updated',
       user.sub,
@@ -443,6 +452,7 @@ export class AppointmentsService {
 
     // Log activity
     await this.activityService.logAppointmentActivity(
+      user.tenantId,
       id,
       `status_changed_to_${dto.status.toLowerCase()}`,
       user.sub,
@@ -475,6 +485,7 @@ export class AppointmentsService {
     // Create new appointment
     const newAppointment = await this.prisma.appointment.create({
       data: {
+        tenantId: user.tenantId,
         branchId: appointment.branchId,
         patientId: appointment.patientId,
         doctorId: appointment.doctorId,
@@ -502,6 +513,7 @@ export class AppointmentsService {
 
     // Log activity
     await this.activityService.logAppointmentActivity(
+      user.tenantId,
       id,
       'rescheduled',
       user.sub,
@@ -549,9 +561,13 @@ export class AppointmentsService {
     });
 
     // Log activity
-    await this.activityService.logAppointmentActivity(id, 'cancelled', user.sub, {
-      reason: dto.reason,
-    });
+    await this.activityService.logAppointmentActivity(
+      user.tenantId,
+      id,
+      'cancelled',
+      user.sub,
+      { reason: dto.reason },
+    );
 
     return updated;
   }

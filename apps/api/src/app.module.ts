@@ -19,6 +19,7 @@ import { AppointmentsModule } from './modules/appointments/appointments.module';
 import { VisitsModule } from './modules/visits/visits.module';
 import { InvoicesModule } from './modules/invoices/invoices.module';
 import { AttachmentsModule } from './modules/attachments/attachments.module';
+import { SequencesModule } from './modules/sequences/sequences.module';
 
 // Milestone 3 Modules
 import { ConversationsModule } from './modules/conversations/conversations.module';
@@ -69,6 +70,7 @@ import { AuditInterceptor } from './modules/audit/interceptors/audit.interceptor
     VisitsModule,
     InvoicesModule,
     AttachmentsModule,
+    SequencesModule,
 
     // Feature Modules - Milestone 3
     ConversationsModule,

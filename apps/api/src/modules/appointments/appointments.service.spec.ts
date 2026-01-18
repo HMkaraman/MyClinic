@@ -131,7 +131,7 @@ describe('AppointmentsService', () => {
   describe('findById', () => {
     it('should return appointment by id', async () => {
       const appointment = createAppointment();
-      prisma.appointment.findUnique.mockResolvedValue(appointment);
+      prisma.appointment.findFirst.mockResolvedValue(appointment);
 
       const result = await service.findById(createAdminPayload(), appointment.id);
 
@@ -139,7 +139,7 @@ describe('AppointmentsService', () => {
     });
 
     it('should throw NotFoundException for non-existent appointment', async () => {
-      prisma.appointment.findUnique.mockResolvedValue(null);
+      prisma.appointment.findFirst.mockResolvedValue(null);
 
       await expect(
         service.findById(createAdminPayload(), 'non-existent'),
@@ -148,7 +148,7 @@ describe('AppointmentsService', () => {
 
     it('should throw ForbiddenException for unauthorized branch access', async () => {
       const appointment = createAppointment({ branchId: 'other-branch' });
-      prisma.appointment.findUnique.mockResolvedValue(appointment);
+      prisma.appointment.findFirst.mockResolvedValue(appointment);
 
       const user = createDoctorPayload({
         sub: 'other-doctor',
@@ -166,7 +166,7 @@ describe('AppointmentsService', () => {
         branchId: 'other-branch',
         doctorId,
       });
-      prisma.appointment.findUnique.mockResolvedValue(appointment);
+      prisma.appointment.findFirst.mockResolvedValue(appointment);
 
       const user = createDoctorPayload({ sub: doctorId, branchIds: ['my-branch'] });
 
@@ -235,7 +235,7 @@ describe('AppointmentsService', () => {
   describe('update', () => {
     it('should update appointment successfully', async () => {
       const appointment = createConfirmedAppointment();
-      prisma.appointment.findUnique.mockResolvedValue(appointment);
+      prisma.appointment.findFirst.mockResolvedValue(appointment);
       prisma.appointment.update.mockResolvedValue({
         ...appointment,
         notes: 'Updated notes',
@@ -250,7 +250,7 @@ describe('AppointmentsService', () => {
 
     it('should throw BadRequestException for completed appointment', async () => {
       const appointment = createCompletedAppointment();
-      prisma.appointment.findUnique.mockResolvedValue(appointment);
+      prisma.appointment.findFirst.mockResolvedValue(appointment);
 
       await expect(
         service.update(createAdminPayload(), appointment.id, { notes: 'test' }),
@@ -259,7 +259,7 @@ describe('AppointmentsService', () => {
 
     it('should throw BadRequestException for cancelled appointment', async () => {
       const appointment = createCancelledAppointment();
-      prisma.appointment.findUnique.mockResolvedValue(appointment);
+      prisma.appointment.findFirst.mockResolvedValue(appointment);
 
       await expect(
         service.update(createAdminPayload(), appointment.id, { notes: 'test' }),
@@ -270,7 +270,7 @@ describe('AppointmentsService', () => {
   describe('changeStatus', () => {
     it('should change status from NEW to CONFIRMED', async () => {
       const appointment = createAppointment({ status: AppointmentStatus.NEW });
-      prisma.appointment.findUnique.mockResolvedValue(appointment);
+      prisma.appointment.findFirst.mockResolvedValue(appointment);
       prisma.appointment.update.mockResolvedValue({
         ...appointment,
         status: AppointmentStatus.CONFIRMED,
@@ -285,7 +285,7 @@ describe('AppointmentsService', () => {
 
     it('should throw BadRequestException for invalid status transition', async () => {
       const appointment = createAppointment({ status: AppointmentStatus.NEW });
-      prisma.appointment.findUnique.mockResolvedValue(appointment);
+      prisma.appointment.findFirst.mockResolvedValue(appointment);
 
       await expect(
         service.changeStatus(createAdminPayload(), appointment.id, {
@@ -296,7 +296,7 @@ describe('AppointmentsService', () => {
 
     it('should set arrivalTime when changing to ARRIVED', async () => {
       const appointment = createConfirmedAppointment();
-      prisma.appointment.findUnique.mockResolvedValue(appointment);
+      prisma.appointment.findFirst.mockResolvedValue(appointment);
       prisma.appointment.update.mockResolvedValue({
         ...appointment,
         status: AppointmentStatus.ARRIVED,
@@ -325,7 +325,7 @@ describe('AppointmentsService', () => {
         status: AppointmentStatus.NEW,
       });
 
-      prisma.appointment.findUnique.mockResolvedValue(appointment);
+      prisma.appointment.findFirst.mockResolvedValue(appointment);
       prisma.appointment.update.mockResolvedValue({
         ...appointment,
         status: AppointmentStatus.RESCHEDULED,
@@ -343,7 +343,7 @@ describe('AppointmentsService', () => {
 
     it('should throw BadRequestException for completed appointment', async () => {
       const appointment = createCompletedAppointment();
-      prisma.appointment.findUnique.mockResolvedValue(appointment);
+      prisma.appointment.findFirst.mockResolvedValue(appointment);
 
       await expect(
         service.reschedule(createAdminPayload(), appointment.id, {
@@ -357,7 +357,7 @@ describe('AppointmentsService', () => {
   describe('cancel', () => {
     it('should cancel appointment successfully', async () => {
       const appointment = createConfirmedAppointment();
-      prisma.appointment.findUnique.mockResolvedValue(appointment);
+      prisma.appointment.findFirst.mockResolvedValue(appointment);
       prisma.appointment.update.mockResolvedValue({
         ...appointment,
         status: AppointmentStatus.CANCELLED,
@@ -373,7 +373,7 @@ describe('AppointmentsService', () => {
 
     it('should throw BadRequestException for already cancelled appointment', async () => {
       const appointment = createCancelledAppointment();
-      prisma.appointment.findUnique.mockResolvedValue(appointment);
+      prisma.appointment.findFirst.mockResolvedValue(appointment);
 
       await expect(
         service.cancel(createAdminPayload(), appointment.id, { reason: 'Test' }),

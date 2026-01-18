@@ -35,9 +35,11 @@ export class VisitsService {
     } = query;
     const skip = (page! - 1) * limit!;
 
-    const where: Prisma.VisitWhereInput = {};
+    const where: Prisma.VisitWhereInput = {
+      tenantId: user.tenantId, // Always scope to tenant
+    };
 
-    // Branch scoping
+    // Branch scoping - only bypass for admin roles
     if (branchId) {
       where.branchId = branchId;
     } else if (
@@ -107,8 +109,11 @@ export class VisitsService {
   }
 
   async findById(user: JwtPayload, id: string) {
-    const visit = await this.prisma.visit.findUnique({
-      where: { id },
+    const visit = await this.prisma.visit.findFirst({
+      where: {
+        id,
+        tenantId: user.tenantId, // Always scope to tenant
+      },
       include: {
         patient: {
           select: {
@@ -179,7 +184,10 @@ export class VisitsService {
     }
 
     const visits = await this.prisma.visit.findMany({
-      where: { patientId },
+      where: {
+        tenantId: user.tenantId, // Always scope to tenant
+        patientId,
+      },
       orderBy: { createdAt: 'desc' },
       include: {
         doctor: {
@@ -251,6 +259,7 @@ export class VisitsService {
 
     const visit = await this.prisma.visit.create({
       data: {
+        tenantId: user.tenantId,
         branchId: dto.branchId,
         patientId: dto.patientId,
         doctorId: user.sub, // Current user is the doctor
@@ -281,14 +290,14 @@ export class VisitsService {
     });
 
     // Log activity
-    await this.activityService.logVisitActivity(visit.id, 'created', user.sub, {
+    await this.activityService.logVisitActivity(user.tenantId, visit.id, 'created', user.sub, {
       patientId: patient.id,
       patientName: patient.name,
       diagnosis: dto.diagnosis,
     });
 
     // Also log to patient timeline
-    await this.activityService.logPatientActivity(patient.id, 'visit_created', user.sub, {
+    await this.activityService.logPatientActivity(user.tenantId, patient.id, 'visit_created', user.sub, {
       visitId: visit.id,
       diagnosis: dto.diagnosis,
     });
@@ -336,7 +345,7 @@ export class VisitsService {
     });
 
     // Log activity
-    await this.activityService.logVisitActivity(id, 'updated', user.sub, {
+    await this.activityService.logVisitActivity(user.tenantId, id, 'updated', user.sub, {
       updatedFields: Object.keys(dto),
     });
 

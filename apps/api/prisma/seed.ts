@@ -9,6 +9,7 @@ import {
   TaskEntityType,
   TaskPriority,
   TaskStatus,
+  SequenceType,
 } from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
 
@@ -294,6 +295,7 @@ async function main() {
     update: {},
     create: {
       id: 'appointment-demo-1',
+      tenantId: tenant.id,
       branchId: branch.id,
       patientId: patient1.id,
       doctorId: doctor.id,
@@ -482,6 +484,56 @@ async function main() {
     },
   });
   console.log('✓ Created task:', task3.title);
+
+  // =============================================
+  // Initialize Tenant Sequences
+  // =============================================
+
+  // Initialize patient file number sequence (starting from 2 since we have 2 demo patients)
+  await prisma.tenantSequence.upsert({
+    where: {
+      tenantId_type_year_month: {
+        tenantId: tenant.id,
+        type: SequenceType.PATIENT_FILE_NUMBER,
+        year: null,
+        month: null,
+      },
+    },
+    update: { value: 2 },
+    create: {
+      tenantId: tenant.id,
+      type: SequenceType.PATIENT_FILE_NUMBER,
+      year: null,
+      month: null,
+      value: 2,
+    },
+  });
+  console.log('✓ Initialized patient file number sequence');
+
+  // Initialize invoice number sequence for current month (starting from 0)
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const currentMonth = now.getMonth() + 1;
+
+  await prisma.tenantSequence.upsert({
+    where: {
+      tenantId_type_year_month: {
+        tenantId: tenant.id,
+        type: SequenceType.INVOICE_NUMBER,
+        year: currentYear,
+        month: currentMonth,
+      },
+    },
+    update: { value: 0 },
+    create: {
+      tenantId: tenant.id,
+      type: SequenceType.INVOICE_NUMBER,
+      year: currentYear,
+      month: currentMonth,
+      value: 0,
+    },
+  });
+  console.log('✓ Initialized invoice number sequence');
 
   console.log('\n🎉 Database seed completed successfully!\n');
   console.log('Test credentials:');

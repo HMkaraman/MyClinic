@@ -8,6 +8,7 @@ import { Prisma, Role } from '@prisma/client';
 
 import { PrismaService } from '../../prisma/prisma.service';
 import { ActivityService } from '../activity/activity.service';
+import { SequencesService } from '../sequences/sequences.service';
 import { CreatePatientDto, UpdatePatientDto, QueryPatientsDto } from './dto';
 import { JwtPayload } from '../auth/decorators/current-user.decorator';
 
@@ -18,6 +19,7 @@ export class PatientsService {
   constructor(
     private prisma: PrismaService,
     private activityService: ActivityService,
+    private sequencesService: SequencesService,
   ) {}
 
   async findAll(user: JwtPayload, query: QueryPatientsDto) {
@@ -186,8 +188,8 @@ export class PatientsService {
       throw new ForbiddenException('Access denied to this branch');
     }
 
-    // Generate unique file number
-    const fileNumber = await this.generateFileNumber(user.tenantId);
+    // Generate unique file number using atomic sequence
+    const fileNumber = await this.sequencesService.generatePatientFileNumber(user.tenantId);
 
     const patient = await this.prisma.patient.create({
       data: {
@@ -212,6 +214,7 @@ export class PatientsService {
 
     // Log activity
     await this.activityService.logPatientActivity(
+      user.tenantId,
       patient.id,
       'created',
       user.sub,
@@ -278,6 +281,7 @@ export class PatientsService {
 
     // Log activity
     await this.activityService.logPatientActivity(
+      user.tenantId,
       patient.id,
       'updated',
       user.sub,
@@ -307,28 +311,14 @@ export class PatientsService {
     });
 
     // Log activity
-    await this.activityService.logPatientActivity(patient.id, 'deleted', user.sub, {
-      name: patient.name,
-      fileNumber: patient.fileNumber,
-    });
+    await this.activityService.logPatientActivity(
+      user.tenantId,
+      patient.id,
+      'deleted',
+      user.sub,
+      { name: patient.name, fileNumber: patient.fileNumber },
+    );
 
     return { message: 'Patient deleted successfully' };
-  }
-
-  private async generateFileNumber(tenantId: string): Promise<string> {
-    // Get the count of patients in this tenant to generate sequential number
-    const count = await this.prisma.patient.count({
-      where: { tenantId },
-    });
-
-    // Format: P-YYYYMMDD-XXXXX (P-20260118-00001)
-    const date = new Date();
-    const dateStr =
-      date.getFullYear().toString() +
-      (date.getMonth() + 1).toString().padStart(2, '0') +
-      date.getDate().toString().padStart(2, '0');
-    const sequence = (count + 1).toString().padStart(5, '0');
-
-    return `P-${dateStr}-${sequence}`;
   }
 }

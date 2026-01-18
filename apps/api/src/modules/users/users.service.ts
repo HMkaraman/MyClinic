@@ -145,6 +145,7 @@ export class UsersService {
 
     // Log activity
     await this.activityService.create({
+      tenantId,
       entityType: 'User',
       entityId: user.id,
       action: 'created',
@@ -209,6 +210,7 @@ export class UsersService {
 
     // Log activity
     await this.activityService.create({
+      tenantId,
       entityType: 'User',
       entityId: user.id,
       action: 'updated',
@@ -241,6 +243,7 @@ export class UsersService {
 
     // Log activity
     await this.activityService.create({
+      tenantId,
       entityType: 'User',
       entityId: id,
       action: 'deleted',

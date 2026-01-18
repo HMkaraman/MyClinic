@@ -221,6 +221,7 @@ export class ConversationsService {
 
     // Log activity
     await this.activityService.logConversationActivity(
+      user.tenantId,
       conversation.id,
       'created',
       user.sub,
@@ -259,6 +260,7 @@ export class ConversationsService {
     // Log activity for status change
     if (dto.status && dto.status !== existing.status) {
       await this.activityService.logConversationActivity(
+        user.tenantId,
         conversation.id,
         'status_changed',
         user.sub,
@@ -269,6 +271,7 @@ export class ConversationsService {
     // Log activity for assignment change
     if (dto.assignedTo && dto.assignedTo !== existing.assignedTo) {
       await this.activityService.logConversationActivity(
+        user.tenantId,
         conversation.id,
         'assigned',
         user.sub,
@@ -294,6 +297,7 @@ export class ConversationsService {
 
     // Log activity
     await this.activityService.logConversationActivity(
+      user.tenantId,
       conversation.id,
       'assigned',
       user.sub,
@@ -314,6 +318,7 @@ export class ConversationsService {
 
     // Log activity
     await this.activityService.logConversationActivity(
+      user.tenantId,
       conversation.id,
       'tags_added',
       user.sub,
@@ -334,6 +339,7 @@ export class ConversationsService {
 
     // Log activity
     await this.activityService.logConversationActivity(
+      user.tenantId,
       conversation.id,
       'tag_removed',
       user.sub,
@@ -372,6 +378,7 @@ export class ConversationsService {
 
     // Log activity
     await this.activityService.logConversationActivity(
+      user.tenantId,
       conversationId,
       dto.isInternalNote ? 'internal_note_added' : 'message_sent',
       user.sub,
@@ -403,6 +410,7 @@ export class ConversationsService {
 
     // Log activity
     await this.activityService.logConversationActivity(
+      user.tenantId,
       conversationId,
       'internal_note_added',
       user.sub,
@@ -456,6 +464,7 @@ export class ConversationsService {
 
     // Log activity
     await this.activityService.logConversationActivity(
+      user.tenantId,
       conversation.id,
       'linked_to_patient',
       user.sub,

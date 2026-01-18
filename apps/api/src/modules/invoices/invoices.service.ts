@@ -8,6 +8,7 @@ import { Prisma, InvoiceStatus, Role } from '@prisma/client';
 
 import { PrismaService } from '../../prisma/prisma.service';
 import { ActivityService } from '../activity/activity.service';
+import { SequencesService } from '../sequences/sequences.service';
 import {
   CreateInvoiceDto,
   UpdateInvoiceDto,
@@ -33,6 +34,7 @@ export class InvoicesService {
   constructor(
     private prisma: PrismaService,
     private activityService: ActivityService,
+    private sequencesService: SequencesService,
   ) {}
 
   async findAll(user: JwtPayload, query: QueryInvoicesDto) {
@@ -50,9 +52,11 @@ export class InvoicesService {
     } = query;
     const skip = (page! - 1) * limit!;
 
-    const where: Prisma.InvoiceWhereInput = {};
+    const where: Prisma.InvoiceWhereInput = {
+      tenantId: user.tenantId, // Always scope to tenant
+    };
 
-    // Branch scoping
+    // Branch scoping - only bypass for admin roles
     if (branchId) {
       where.branchId = branchId;
     } else if (
@@ -120,8 +124,11 @@ export class InvoicesService {
   }
 
   async findById(user: JwtPayload, id: string) {
-    const invoice = await this.prisma.invoice.findUnique({
-      where: { id },
+    const invoice = await this.prisma.invoice.findFirst({
+      where: {
+        id,
+        tenantId: user.tenantId, // Always scope to tenant
+      },
       include: {
         patient: {
           select: { id: true, name: true, phone: true, fileNumber: true },
@@ -184,7 +191,10 @@ export class InvoicesService {
     }
 
     const invoices = await this.prisma.invoice.findMany({
-      where: { patientId },
+      where: {
+        tenantId: user.tenantId, // Always scope to tenant
+        patientId,
+      },
       orderBy: { createdAt: 'desc' },
       include: {
         branch: {
@@ -227,11 +237,12 @@ export class InvoicesService {
     const tax = new Prisma.Decimal(dto.tax || 0);
     const total = subtotal.sub(discount).add(tax);
 
-    // Generate invoice number
-    const invoiceNumber = await this.generateInvoiceNumber();
+    // Generate invoice number using atomic sequence
+    const invoiceNumber = await this.sequencesService.generateInvoiceNumber(user.tenantId);
 
     const invoice = await this.prisma.invoice.create({
       data: {
+        tenantId: user.tenantId,
         branchId: dto.branchId,
         patientId: dto.patientId,
         appointmentId: dto.appointmentId,
@@ -258,14 +269,14 @@ export class InvoicesService {
     });
 
     // Log activity
-    await this.activityService.logInvoiceActivity(invoice.id, 'created', user.sub, {
+    await this.activityService.logInvoiceActivity(user.tenantId, invoice.id, 'created', user.sub, {
       invoiceNumber,
       total: total.toString(),
       patientName: patient.name,
     });
 
     // Also log to patient timeline
-    await this.activityService.logPatientActivity(patient.id, 'invoice_created', user.sub, {
+    await this.activityService.logPatientActivity(user.tenantId, patient.id, 'invoice_created', user.sub, {
       invoiceId: invoice.id,
       invoiceNumber,
       total: total.toString(),
@@ -343,7 +354,7 @@ export class InvoicesService {
     });
 
     // Log activity
-    await this.activityService.logInvoiceActivity(id, 'updated', user.sub, {
+    await this.activityService.logInvoiceActivity(user.tenantId, id, 'updated', user.sub, {
       updatedFields: Object.keys(dto),
     });
 
@@ -408,7 +419,7 @@ export class InvoicesService {
     ]);
 
     // Log activity
-    await this.activityService.logInvoiceActivity(invoiceId, 'payment_added', user.sub, {
+    await this.activityService.logInvoiceActivity(user.tenantId, invoiceId, 'payment_added', user.sub, {
       amount: dto.amount,
       method: dto.method,
       newStatus,
@@ -438,28 +449,5 @@ export class InvoicesService {
     });
 
     return { subtotal, items: processedItems };
-  }
-
-  private async generateInvoiceNumber(): Promise<string> {
-    const date = new Date();
-    const year = date.getFullYear();
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-
-    // Get count of invoices this month
-    const startOfMonth = new Date(year, date.getMonth(), 1);
-    const endOfMonth = new Date(year, date.getMonth() + 1, 0, 23, 59, 59, 999);
-
-    const count = await this.prisma.invoice.count({
-      where: {
-        createdAt: {
-          gte: startOfMonth,
-          lte: endOfMonth,
-        },
-      },
-    });
-
-    // Format: INV-YYYYMM-XXXXX (INV-202601-00001)
-    const sequence = (count + 1).toString().padStart(5, '0');
-    return `INV-${year}${month}-${sequence}`;
   }
 }

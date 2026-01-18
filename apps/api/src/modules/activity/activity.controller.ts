@@ -20,10 +20,11 @@ export class ActivityController {
   @ApiOperation({ summary: 'Get activity timeline for an entity' })
   @ApiResponse({ status: 200, description: 'Timeline retrieved' })
   async getEntityTimeline(
+    @CurrentUser() user: JwtPayload,
     @Param('entityType') entityType: string,
     @Param('entityId') entityId: string,
   ) {
-    return this.activityService.getEntityTimeline(entityType, entityId);
+    return this.activityService.getEntityTimeline(user.tenantId, entityType, entityId);
   }
 
   @Get('user/:userId')
@@ -31,10 +32,11 @@ export class ActivityController {
   @ApiResponse({ status: 200, description: 'User activity retrieved' })
   @ApiQuery({ name: 'limit', required: false, type: Number })
   async getUserActivity(
+    @CurrentUser() user: JwtPayload,
     @Param('userId') userId: string,
     @Query('limit') limit?: number,
   ) {
-    return this.activityService.getUserActivity(userId, limit || 50);
+    return this.activityService.getUserActivity(user.tenantId, userId, limit || 50);
   }
 
   @Get('me')
@@ -45,7 +47,7 @@ export class ActivityController {
     @CurrentUser() user: JwtPayload,
     @Query('limit') limit?: number,
   ) {
-    return this.activityService.getUserActivity(user.sub, limit || 50);
+    return this.activityService.getUserActivity(user.tenantId, user.sub, limit || 50);
   }
 
   @Get('recent')
@@ -54,10 +56,11 @@ export class ActivityController {
   @ApiQuery({ name: 'entityTypes', required: false, type: String })
   @ApiQuery({ name: 'limit', required: false, type: Number })
   async getRecentActivity(
+    @CurrentUser() user: JwtPayload,
     @Query('entityTypes') entityTypes?: string,
     @Query('limit') limit?: number,
   ) {
     const types = entityTypes ? entityTypes.split(',') : undefined;
-    return this.activityService.getRecentActivity(types, limit || 50);
+    return this.activityService.getRecentActivity(user.tenantId, types, limit || 50);
   }
 }

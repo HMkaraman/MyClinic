@@ -118,6 +118,7 @@ export class AttachmentsService {
     // Create database record
     const attachment = await this.prisma.attachment.create({
       data: {
+        tenantId: user.tenantId,
         entityType,
         entityId,
         filePath,
@@ -134,24 +135,28 @@ export class AttachmentsService {
     });
 
     // Log activity
-    await this.activityService.create({
-      entityType: entityType,
-      entityId: entityId,
-      action: 'attachment_uploaded',
-      actorId: user.sub,
-      metadata: {
+    await this.activityService.logAttachmentActivity(
+      user.tenantId,
+      entityType,
+      entityId,
+      'attachment_uploaded',
+      user.sub,
+      {
         attachmentId: attachment.id,
         fileName: file.originalname,
         fileSize: file.size,
       },
-    });
+    );
 
     return attachment;
   }
 
   async findById(user: JwtPayload, id: string) {
-    const attachment = await this.prisma.attachment.findUnique({
-      where: { id },
+    const attachment = await this.prisma.attachment.findFirst({
+      where: {
+        id,
+        tenantId: user.tenantId, // Always scope to tenant
+      },
       include: {
         uploader: {
           select: { id: true, name: true, email: true },
@@ -163,7 +168,7 @@ export class AttachmentsService {
       throw new NotFoundException('Attachment not found');
     }
 
-    // Verify access to the entity
+    // Verify access to the entity (branch check)
     await this.verifyEntityAccess(user, attachment.entityType, attachment.entityId);
 
     // Generate signed URL for download
@@ -192,6 +197,7 @@ export class AttachmentsService {
 
     const attachments = await this.prisma.attachment.findMany({
       where: {
+        tenantId: user.tenantId, // Always scope to tenant
         entityType,
         entityId,
       },
@@ -207,8 +213,11 @@ export class AttachmentsService {
   }
 
   async delete(user: JwtPayload, id: string) {
-    const attachment = await this.prisma.attachment.findUnique({
-      where: { id },
+    const attachment = await this.prisma.attachment.findFirst({
+      where: {
+        id,
+        tenantId: user.tenantId, // Always scope to tenant
+      },
     });
 
     if (!attachment) {
@@ -237,16 +246,17 @@ export class AttachmentsService {
     });
 
     // Log activity
-    await this.activityService.create({
-      entityType: attachment.entityType,
-      entityId: attachment.entityId,
-      action: 'attachment_deleted',
-      actorId: user.sub,
-      metadata: {
+    await this.activityService.logAttachmentActivity(
+      user.tenantId,
+      attachment.entityType,
+      attachment.entityId,
+      'attachment_deleted',
+      user.sub,
+      {
         attachmentId: id,
         fileName: attachment.fileName,
       },
-    });
+    );
 
     return { message: 'Attachment deleted successfully' };
   }

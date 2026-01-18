@@ -6,6 +6,7 @@ import { Prisma } from '@prisma/client';
 import { InvoicesService } from './invoices.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ActivityService } from '../activity/activity.service';
+import { SequencesService } from '../sequences/sequences.service';
 import { MockPrismaService } from '../../../test/mocks';
 import {
   createAdminPayload,
@@ -19,9 +20,11 @@ describe('InvoicesService', () => {
   let service: InvoicesService;
   let prisma: MockPrismaService;
   let activityService: jest.Mocked<ActivityService>;
+  let sequencesService: jest.Mocked<SequencesService>;
 
   const createInvoice = (overrides: Partial<any> = {}) => ({
     id: 'test-invoice-id',
+    tenantId: 'test-tenant-id',
     branchId: 'test-branch-id',
     patientId: 'test-patient-id',
     invoiceNumber: 'INV-202601-00001',
@@ -54,12 +57,16 @@ describe('InvoicesService', () => {
       logInvoiceActivity: jest.fn().mockResolvedValue(undefined),
       logPatientActivity: jest.fn().mockResolvedValue(undefined),
     } as unknown as jest.Mocked<ActivityService>;
+    sequencesService = {
+      generateInvoiceNumber: jest.fn().mockResolvedValue('INV-202601-00001'),
+    } as unknown as jest.Mocked<SequencesService>;
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         InvoicesService,
         { provide: PrismaService, useValue: prisma },
         { provide: ActivityService, useValue: activityService },
+        { provide: SequencesService, useValue: sequencesService },
       ],
     }).compile();
 
@@ -150,7 +157,7 @@ describe('InvoicesService', () => {
   describe('findById', () => {
     it('should return invoice by id', async () => {
       const invoice = createInvoice();
-      prisma.invoice.findUnique.mockResolvedValue(invoice);
+      prisma.invoice.findFirst.mockResolvedValue(invoice);
 
       const result = await service.findById(createAdminPayload(), invoice.id);
 
@@ -158,7 +165,7 @@ describe('InvoicesService', () => {
     });
 
     it('should throw NotFoundException for non-existent invoice', async () => {
-      prisma.invoice.findUnique.mockResolvedValue(null);
+      prisma.invoice.findFirst.mockResolvedValue(null);
 
       await expect(
         service.findById(createAdminPayload(), 'non-existent'),
@@ -167,7 +174,7 @@ describe('InvoicesService', () => {
 
     it('should throw ForbiddenException for unauthorized branch access', async () => {
       const invoice = createInvoice({ branchId: 'other-branch' });
-      prisma.invoice.findUnique.mockResolvedValue(invoice);
+      prisma.invoice.findFirst.mockResolvedValue(invoice);
 
       const user = createReceptionPayload({ branchIds: ['my-branch'] });
 
@@ -257,7 +264,7 @@ describe('InvoicesService', () => {
   describe('update', () => {
     it('should update invoice successfully', async () => {
       const invoice = createInvoice();
-      prisma.invoice.findUnique.mockResolvedValue(invoice);
+      prisma.invoice.findFirst.mockResolvedValue(invoice);
       prisma.invoice.update.mockResolvedValue({
         ...invoice,
         notes: 'Updated notes',
@@ -272,7 +279,7 @@ describe('InvoicesService', () => {
 
     it('should throw BadRequestException for paid invoice', async () => {
       const invoice = createInvoice({ status: InvoiceStatus.PAID });
-      prisma.invoice.findUnique.mockResolvedValue(invoice);
+      prisma.invoice.findFirst.mockResolvedValue(invoice);
 
       await expect(
         service.update(createAdminPayload(), invoice.id, { notes: 'test' }),
@@ -281,7 +288,7 @@ describe('InvoicesService', () => {
 
     it('should throw BadRequestException for cancelled invoice', async () => {
       const invoice = createInvoice({ status: InvoiceStatus.CANCELLED });
-      prisma.invoice.findUnique.mockResolvedValue(invoice);
+      prisma.invoice.findFirst.mockResolvedValue(invoice);
 
       await expect(
         service.update(createAdminPayload(), invoice.id, { notes: 'test' }),
@@ -295,7 +302,7 @@ describe('InvoicesService', () => {
         tax: new Prisma.Decimal(0),
         total: new Prisma.Decimal(100),
       });
-      prisma.invoice.findUnique.mockResolvedValue(invoice);
+      prisma.invoice.findFirst.mockResolvedValue(invoice);
       prisma.invoice.update.mockImplementation(async ({ data }) => ({
         ...invoice,
         ...data,
@@ -330,7 +337,7 @@ describe('InvoicesService', () => {
         user: { id: 'user-1', name: 'Test User' },
       };
 
-      prisma.invoice.findUnique.mockResolvedValue(invoice);
+      prisma.invoice.findFirst.mockResolvedValue(invoice);
       prisma.$transaction.mockResolvedValue([payment, invoice]);
 
       const result = await service.addPayment(createAdminPayload(), invoice.id, {
@@ -349,7 +356,7 @@ describe('InvoicesService', () => {
         status: InvoiceStatus.PENDING,
       });
 
-      prisma.invoice.findUnique.mockResolvedValue(invoice);
+      prisma.invoice.findFirst.mockResolvedValue(invoice);
       prisma.$transaction.mockResolvedValue([
         { id: 'payment-1', amount: new Prisma.Decimal(50) },
         { ...invoice, paidAmount: new Prisma.Decimal(50), status: InvoiceStatus.PARTIAL },
@@ -370,7 +377,7 @@ describe('InvoicesService', () => {
         status: InvoiceStatus.PARTIAL,
       });
 
-      prisma.invoice.findUnique.mockResolvedValue(invoice);
+      prisma.invoice.findFirst.mockResolvedValue(invoice);
       prisma.$transaction.mockResolvedValue([
         { id: 'payment-1', amount: new Prisma.Decimal(50) },
         { ...invoice, paidAmount: new Prisma.Decimal(100), status: InvoiceStatus.PAID },
@@ -386,7 +393,7 @@ describe('InvoicesService', () => {
 
     it('should throw BadRequestException for cancelled invoice', async () => {
       const invoice = createInvoice({ status: InvoiceStatus.CANCELLED });
-      prisma.invoice.findUnique.mockResolvedValue(invoice);
+      prisma.invoice.findFirst.mockResolvedValue(invoice);
 
       await expect(
         service.addPayment(createAdminPayload(), invoice.id, {
@@ -401,7 +408,7 @@ describe('InvoicesService', () => {
         total: new Prisma.Decimal(100),
         paidAmount: new Prisma.Decimal(80),
       });
-      prisma.invoice.findUnique.mockResolvedValue(invoice);
+      prisma.invoice.findFirst.mockResolvedValue(invoice);
 
       await expect(
         service.addPayment(createAdminPayload(), invoice.id, {

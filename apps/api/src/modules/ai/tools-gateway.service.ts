@@ -450,6 +450,7 @@ export class ToolsGatewayService {
       // Create new appointment
       const appointment = await this.prisma.appointment.create({
         data: {
+          tenantId: user.tenantId,
           branchId,
           patientId,
           doctorId,

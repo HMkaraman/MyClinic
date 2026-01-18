@@ -167,6 +167,7 @@ export class TasksService {
 
     // Log activity on the related entity
     await this.activityService.logTaskActivity(
+      user.tenantId,
       task.entityType,
       task.entityId,
       'task_created',
@@ -216,6 +217,7 @@ export class TasksService {
 
     // Log activity
     await this.activityService.logTaskActivity(
+      user.tenantId,
       task.entityType,
       task.entityId,
       'task_updated',
@@ -257,6 +259,7 @@ export class TasksService {
 
     // Log activity
     await this.activityService.logTaskActivity(
+      user.tenantId,
       updatedTask.entityType,
       updatedTask.entityId,
       'task_status_changed',
@@ -289,6 +292,7 @@ export class TasksService {
 
     // Log activity
     await this.activityService.logTaskActivity(
+      user.tenantId,
       updatedTask.entityType,
       updatedTask.entityId,
       'task_reassigned',
@@ -311,6 +315,7 @@ export class TasksService {
 
     // Log activity
     await this.activityService.logTaskActivity(
+      user.tenantId,
       task.entityType,
       task.entityId,
       'task_deleted',

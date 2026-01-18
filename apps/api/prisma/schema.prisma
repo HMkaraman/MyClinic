@@ -21,13 +21,20 @@ model Tenant {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   // Relations
-  branches      Branch[]
-  users         User[]
-  patients      Patient[]
-  services      Service[]
-  leads         Lead[]
-  conversations Conversation[]
-  auditEvents   AuditEvent[]
+  branches       Branch[]
+  users          User[]
+  patients       Patient[]
+  services       Service[]
+  leads          Lead[]
+  conversations  Conversation[]
+  auditEvents    AuditEvent[]
+  appointments   Appointment[]
+  visits         Visit[]
+  invoices       Invoice[]
+  expenses       Expense[]
+  activityEvents ActivityEvent[]
+  attachments    Attachment[]
+  sequences      TenantSequence[]
 
   @@map("tenants")
 }
@@ -198,6 +205,7 @@ model Service {
 // ===========================================
 model Appointment {
   id               String            @id @default(cuid())
+  tenantId         String            @map("tenant_id")
   branchId         String            @map("branch_id")
   patientId        String            @map("patient_id")
   doctorId         String            @map("doctor_id")
@@ -215,6 +223,7 @@ model Appointment {
   updatedAt        DateTime          @updatedAt @map("updated_at")
 
   // Relations
+  tenant   Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   branch   Branch   @relation(fields: [branchId], references: [id])
   patient  Patient  @relation(fields: [patientId], references: [id])
   doctor   User     @relation("DoctorAppointments", fields: [doctorId], references: [id])
@@ -222,9 +231,9 @@ model Appointment {
   visit    Visit?
   invoices Invoice[]
 
-  @@index([branchId, scheduledAt])
-  @@index([doctorId, scheduledAt])
-  @@index([patientId])
+  @@index([tenantId, branchId, scheduledAt])
+  @@index([tenantId, doctorId, scheduledAt])
+  @@index([tenantId, patientId])
   @@map("appointments")
 }
 
@@ -244,6 +253,7 @@ enum AppointmentStatus {
 // ===========================================
 model Visit {
   id             String   @id @default(cuid())
+  tenantId       String   @map("tenant_id")
   branchId       String   @map("branch_id")
   patientId      String   @map("patient_id")
   appointmentId  String?  @unique @map("appointment_id")
@@ -256,14 +266,16 @@ model Visit {
   updatedAt      DateTime @updatedAt @map("updated_at")
 
   // Relations
+  tenant      Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   branch      Branch       @relation(fields: [branchId], references: [id])
   patient     Patient      @relation(fields: [patientId], references: [id])
   appointment Appointment? @relation(fields: [appointmentId], references: [id])
   doctor      User         @relation("DoctorVisits", fields: [doctorId], references: [id])
   invoices    Invoice[]
 
-  @@index([patientId])
-  @@index([doctorId])
+  @@index([tenantId, patientId])
+  @@index([tenantId, doctorId])
+  @@index([tenantId, branchId])
   @@map("visits")
 }
 
@@ -272,11 +284,12 @@ model Visit {
 // ===========================================
 model Invoice {
   id             String        @id @default(cuid())
+  tenantId       String        @map("tenant_id")
   branchId       String        @map("branch_id")
   patientId      String        @map("patient_id")
   appointmentId  String?       @map("appointment_id")
   visitId        String?       @map("visit_id")
-  invoiceNumber  String        @unique @map("invoice_number")
+  invoiceNumber  String        @map("invoice_number")
   items          Json
   subtotal       Decimal       @db.Decimal(10, 2)
   discount       Decimal?      @db.Decimal(10, 2)
@@ -291,14 +304,16 @@ model Invoice {
   updatedAt      DateTime      @updatedAt @map("updated_at")
 
   // Relations
+  tenant      Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   branch      Branch       @relation(fields: [branchId], references: [id])
   patient     Patient      @relation(fields: [patientId], references: [id])
   appointment Appointment? @relation(fields: [appointmentId], references: [id])
   visit       Visit?       @relation(fields: [visitId], references: [id])
   payments    Payment[]
 
-  @@index([branchId, createdAt])
-  @@index([patientId])
+  @@unique([tenantId, invoiceNumber])
+  @@index([tenantId, branchId, createdAt])
+  @@index([tenantId, patientId])
   @@map("invoices")
 }
 
@@ -344,6 +359,7 @@ enum PaymentMethod {
 // ===========================================
 model Expense {
   id          String          @id @default(cuid())
+  tenantId    String          @map("tenant_id")
   branchId    String          @map("branch_id")
   category    ExpenseCategory
   amount      Decimal         @db.Decimal(10, 2)
@@ -354,10 +370,11 @@ model Expense {
   createdAt   DateTime        @default(now()) @map("created_at")
 
   // Relations
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   branch Branch @relation(fields: [branchId], references: [id])
   user   User   @relation(fields: [createdBy], references: [id])
 
-  @@index([branchId, date])
+  @@index([tenantId, branchId, date])
   @@map("expenses")
 }
 
@@ -539,6 +556,7 @@ enum TaskStatus {
 // ===========================================
 model Attachment {
   id         String               @id @default(cuid())
+  tenantId   String               @map("tenant_id")
   entityType AttachmentEntityType @map("entity_type")
   entityId   String               @map("entity_id")
   filePath   String               @map("file_path")
@@ -549,9 +567,10 @@ model Attachment {
   createdAt  DateTime             @default(now()) @map("created_at")
 
   // Relations
-  uploader User @relation(fields: [uploadedBy], references: [id])
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  uploader User   @relation(fields: [uploadedBy], references: [id])
 
-  @@index([entityType, entityId])
+  @@index([tenantId, entityType, entityId])
   @@map("attachments")
 }
 
@@ -569,6 +588,7 @@ enum AttachmentEntityType {
 // ===========================================
 model ActivityEvent {
   id         String   @id @default(cuid())
+  tenantId   String   @map("tenant_id")
   entityType String   @map("entity_type")
   entityId   String   @map("entity_id")
   action     String
@@ -577,10 +597,11 @@ model ActivityEvent {
   createdAt  DateTime @default(now()) @map("created_at")
 
   // Relations
-  actor User @relation("ActorEvents", fields: [actorId], references: [id])
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  actor  User   @relation("ActorEvents", fields: [actorId], references: [id])
 
-  @@index([entityType, entityId])
-  @@index([actorId])
+  @@index([tenantId, entityType, entityId])
+  @@index([tenantId, actorId])
   @@map("activity_events")
 }
 
@@ -612,4 +633,27 @@ model AuditEvent {
   @@index([tenantId, createdAt])
   @@index([correlationId])
   @@map("audit_events")
+}
+
+// ===========================================
+// Tenant Sequence (Atomic Number Generation)
+// ===========================================
+model TenantSequence {
+  id        String       @id @default(cuid())
+  tenantId  String       @map("tenant_id")
+  type      SequenceType
+  year      Int?
+  month     Int?
+  value     Int          @default(0)
+  updatedAt DateTime     @updatedAt @map("updated_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, type, year, month])
+  @@map("tenant_sequences")
+}
+
+enum SequenceType {
+  PATIENT_FILE_NUMBER
+  INVOICE_NUMBER
 }

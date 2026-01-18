@@ -153,6 +153,7 @@ export class LeadsService {
 
     // Log activity
     await this.activityService.logLeadActivity(
+      user.tenantId,
       lead.id,
       'created',
       user.sub,
@@ -187,6 +188,7 @@ export class LeadsService {
 
     // Log activity
     await this.activityService.logLeadActivity(
+      user.tenantId,
       lead.id,
       'updated',
       user.sub,
@@ -211,6 +213,7 @@ export class LeadsService {
 
     // Log activity
     await this.activityService.logLeadActivity(
+      user.tenantId,
       updatedLead.id,
       'stage_changed',
       user.sub,
@@ -272,6 +275,7 @@ export class LeadsService {
 
     // Log activities
     await this.activityService.logLeadActivity(
+      user.tenantId,
       lead.id,
       'converted_to_patient',
       user.sub,
@@ -279,6 +283,7 @@ export class LeadsService {
     );
 
     await this.activityService.logPatientActivity(
+      user.tenantId,
       result.patient.id,
       'created_from_lead',
       user.sub,
@@ -299,10 +304,13 @@ export class LeadsService {
     await this.prisma.lead.delete({ where: { id } });
 
     // Log activity
-    await this.activityService.logLeadActivity(lead.id, 'deleted', user.sub, {
-      name: lead.name,
-      phone: lead.phone,
-    });
+    await this.activityService.logLeadActivity(
+      user.tenantId,
+      lead.id,
+      'deleted',
+      user.sub,
+      { name: lead.name, phone: lead.phone },
+    );
 
     return { message: 'Lead deleted successfully' };
   }

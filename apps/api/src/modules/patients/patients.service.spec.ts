@@ -5,6 +5,7 @@ import { Gender, PatientSource, Role } from '@prisma/client';
 import { PatientsService } from './patients.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ActivityService } from '../activity/activity.service';
+import { SequencesService } from '../sequences/sequences.service';
 import { MockPrismaService } from '../../../test/mocks';
 import {
   createAdminPayload,
@@ -19,18 +20,23 @@ describe('PatientsService', () => {
   let service: PatientsService;
   let prisma: MockPrismaService;
   let activityService: jest.Mocked<ActivityService>;
+  let sequencesService: jest.Mocked<SequencesService>;
 
   beforeEach(async () => {
     prisma = new MockPrismaService();
     activityService = {
       logPatientActivity: jest.fn().mockResolvedValue(undefined),
     } as unknown as jest.Mocked<ActivityService>;
+    sequencesService = {
+      generatePatientFileNumber: jest.fn().mockResolvedValue('P-20260118-00001'),
+    } as unknown as jest.Mocked<SequencesService>;
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         PatientsService,
         { provide: PrismaService, useValue: prisma },
         { provide: ActivityService, useValue: activityService },
+        { provide: SequencesService, useValue: sequencesService },
       ],
     }).compile();
 
@@ -251,11 +257,10 @@ describe('PatientsService', () => {
       expect(activityService.logPatientActivity).toHaveBeenCalled();
     });
 
-    it('should generate unique file number', async () => {
+    it('should generate unique file number using SequencesService', async () => {
       const user = createAdminPayload({ branchIds: ['test-branch-id'] });
 
       prisma.patient.findFirst.mockResolvedValue(null);
-      prisma.patient.count.mockResolvedValue(5);
       prisma.patient.create.mockImplementation(async ({ data }) => ({
         ...createPatient(),
         fileNumber: data.fileNumber,
@@ -263,7 +268,8 @@ describe('PatientsService', () => {
 
       const result = await service.create(user, createDto);
 
-      expect(result.fileNumber).toMatch(/^P-\d{8}-00006$/);
+      expect(sequencesService.generatePatientFileNumber).toHaveBeenCalledWith(user.tenantId);
+      expect(result.fileNumber).toBe('P-20260118-00001');
     });
 
     it('should throw ConflictException for duplicate phone', async () => {
@@ -336,13 +342,14 @@ describe('PatientsService', () => {
   describe('delete', () => {
     it('should soft delete patient', async () => {
       const patient = createPatient();
+      const user = createAdminPayload();
       prisma.patient.findFirst.mockResolvedValue(patient);
       prisma.patient.update.mockResolvedValue({
         ...patient,
         deletedAt: new Date(),
       });
 
-      const result = await service.delete(createAdminPayload(), patient.id);
+      const result = await service.delete(user, patient.id);
 
       expect(result.message).toBe('Patient deleted successfully');
       expect(prisma.patient.update).toHaveBeenCalledWith({
@@ -350,6 +357,7 @@ describe('PatientsService', () => {
         data: { deletedAt: expect.any(Date) },
       });
       expect(activityService.logPatientActivity).toHaveBeenCalledWith(
+        user.tenantId,
         patient.id,
         'deleted',
         expect.any(String),

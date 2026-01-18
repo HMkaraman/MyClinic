@@ -3,6 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 
 export interface ActivityInput {
+  tenantId: string;
   entityType: string;
   entityId: string;
   action: string;
@@ -17,6 +18,7 @@ export class ActivityService {
   async create(input: ActivityInput): Promise<void> {
     await this.prisma.activityEvent.create({
       data: {
+        tenantId: input.tenantId,
         entityType: input.entityType,
         entityId: input.entityId,
         action: input.action,
@@ -26,9 +28,10 @@ export class ActivityService {
     });
   }
 
-  async getEntityTimeline(entityType: string, entityId: string) {
+  async getEntityTimeline(tenantId: string, entityType: string, entityId: string) {
     return this.prisma.activityEvent.findMany({
       where: {
+        tenantId,
         entityType,
         entityId,
       },
@@ -46,19 +49,25 @@ export class ActivityService {
     });
   }
 
-  async getUserActivity(actorId: string, limit: number = 50) {
+  async getUserActivity(tenantId: string, actorId: string, limit: number = 50) {
     return this.prisma.activityEvent.findMany({
-      where: { actorId },
+      where: {
+        tenantId,
+        actorId,
+      },
       orderBy: { createdAt: 'desc' },
       take: limit,
     });
   }
 
   async getRecentActivity(
+    tenantId: string,
     entityTypes?: string[],
     limit: number = 50,
   ) {
-    const where: any = {};
+    const where: any = {
+      tenantId,
+    };
 
     if (entityTypes && entityTypes.length > 0) {
       where.entityType = { in: entityTypes };
@@ -83,12 +92,14 @@ export class ActivityService {
 
   // Convenience methods for common entity types
   async logPatientActivity(
+    tenantId: string,
     patientId: string,
     action: string,
     actorId: string,
     metadata?: Record<string, unknown>,
   ): Promise<void> {
     await this.create({
+      tenantId,
       entityType: 'Patient',
       entityId: patientId,
       action,
@@ -98,12 +109,14 @@ export class ActivityService {
   }
 
   async logAppointmentActivity(
+    tenantId: string,
     appointmentId: string,
     action: string,
     actorId: string,
     metadata?: Record<string, unknown>,
   ): Promise<void> {
     await this.create({
+      tenantId,
       entityType: 'Appointment',
       entityId: appointmentId,
       action,
@@ -113,12 +126,14 @@ export class ActivityService {
   }
 
   async logVisitActivity(
+    tenantId: string,
     visitId: string,
     action: string,
     actorId: string,
     metadata?: Record<string, unknown>,
   ): Promise<void> {
     await this.create({
+      tenantId,
       entityType: 'Visit',
       entityId: visitId,
       action,
@@ -128,12 +143,14 @@ export class ActivityService {
   }
 
   async logInvoiceActivity(
+    tenantId: string,
     invoiceId: string,
     action: string,
     actorId: string,
     metadata?: Record<string, unknown>,
   ): Promise<void> {
     await this.create({
+      tenantId,
       entityType: 'Invoice',
       entityId: invoiceId,
       action,
@@ -143,12 +160,14 @@ export class ActivityService {
   }
 
   async logConversationActivity(
+    tenantId: string,
     conversationId: string,
     action: string,
     actorId: string,
     metadata?: Record<string, unknown>,
   ): Promise<void> {
     await this.create({
+      tenantId,
       entityType: 'Conversation',
       entityId: conversationId,
       action,
@@ -158,12 +177,14 @@ export class ActivityService {
   }
 
   async logLeadActivity(
+    tenantId: string,
     leadId: string,
     action: string,
     actorId: string,
     metadata?: Record<string, unknown>,
   ): Promise<void> {
     await this.create({
+      tenantId,
       entityType: 'Lead',
       entityId: leadId,
       action,
@@ -173,6 +194,7 @@ export class ActivityService {
   }
 
   async logTaskActivity(
+    tenantId: string,
     entityType: string,
     entityId: string,
     action: string,
@@ -180,6 +202,25 @@ export class ActivityService {
     metadata?: Record<string, unknown>,
   ): Promise<void> {
     await this.create({
+      tenantId,
+      entityType,
+      entityId,
+      action,
+      actorId,
+      metadata,
+    });
+  }
+
+  async logAttachmentActivity(
+    tenantId: string,
+    entityType: string,
+    entityId: string,
+    action: string,
+    actorId: string,
+    metadata?: Record<string, unknown>,
+  ): Promise<void> {
+    await this.create({
+      tenantId,
       entityType,
       entityId,
       action,
