@@ -25,6 +25,9 @@ import { ConversationsModule } from './modules/conversations/conversations.modul
 import { LeadsModule } from './modules/leads/leads.module';
 import { TasksModule } from './modules/tasks/tasks.module';
 
+// Milestone 4 Modules
+import { AiModule } from './modules/ai/ai.module';
+
 import { JwtAuthGuard } from './modules/auth/guards/jwt-auth.guard';
 import { RolesGuard } from './modules/auth/guards/roles.guard';
 import { TenantGuard } from './modules/tenant/guards/tenant.guard';
@@ -71,6 +74,9 @@ import { AuditInterceptor } from './modules/audit/interceptors/audit.interceptor
     ConversationsModule,
     LeadsModule,
     TasksModule,
+
+    // Feature Modules - Milestone 4
+    AiModule,
   ],
   controllers: [],
   providers: [
