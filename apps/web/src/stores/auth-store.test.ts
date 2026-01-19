@@ -138,7 +138,9 @@ describe('useAuthStore', () => {
         }),
       ).rejects.toThrow('Invalid credentials');
 
-      expect(result.current.isLoading).toBe(false);
+      await waitFor(() => {
+        expect(result.current.isLoading).toBe(false);
+      });
       expect(result.current.isAuthenticated).toBe(false);
     });
   });
