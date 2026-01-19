@@ -6,6 +6,7 @@ import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   Select,
   SelectContent,
@@ -22,67 +23,18 @@ import {
   CalendarOff,
   FileText,
   Plus,
+  AlertCircle,
 } from 'lucide-react';
+import {
+  useWorkSchedules,
+  useTimeOffRequests,
+} from '@/hooks/use-scheduling';
 
 interface Staff {
   id: string;
   name: string;
   role: string;
 }
-
-interface ScheduleEntry {
-  id: string;
-  staffId: string;
-  staff: Staff;
-  date: string;
-  startTime?: string;
-  endTime?: string;
-  isWorkingDay: boolean;
-  isOnLeave?: boolean;
-  leaveType?: string;
-}
-
-// Mock data
-const mockStaff: Staff[] = [
-  { id: '1', name: 'Dr. Ahmed Hassan', role: 'DOCTOR' },
-  { id: '2', name: 'Dr. Sara Mohamed', role: 'DOCTOR' },
-  { id: '3', name: 'Nurse Fatima', role: 'NURSE' },
-  { id: '4', name: 'Receptionist Ali', role: 'RECEPTION' },
-];
-
-const generateMockSchedules = (weekStart: Date): ScheduleEntry[] => {
-  const schedules: ScheduleEntry[] = [];
-  const days = 7;
-
-  mockStaff.forEach((staff) => {
-    for (let i = 0; i < days; i++) {
-      const date = new Date(weekStart);
-      date.setDate(date.getDate() + i);
-      const dateStr = date.toISOString().split('T')[0] ?? '';
-      const dayOfWeek = date.getDay();
-
-      // Weekend off
-      const isWeekend = dayOfWeek === 5 || dayOfWeek === 6;
-
-      // Random leave for some staff
-      const isOnLeave = staff.id === '3' && i === 2;
-
-      schedules.push({
-        id: `${staff.id}-${dateStr}`,
-        staffId: staff.id,
-        staff,
-        date: dateStr,
-        startTime: isWeekend || isOnLeave ? undefined : '09:00',
-        endTime: isWeekend || isOnLeave ? undefined : '17:00',
-        isWorkingDay: !isWeekend && !isOnLeave,
-        isOnLeave,
-        leaveType: isOnLeave ? 'SICK' : undefined,
-      });
-    }
-  });
-
-  return schedules;
-};
 
 const getWeekDays = (weekStart: Date) => {
   const days = [];
@@ -98,6 +50,10 @@ const formatDate = (date: Date) => {
   return date.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric' });
 };
 
+const formatDateForApi = (date: Date): string => {
+  return date.toISOString().split('T')[0] ?? '';
+};
+
 export default function SchedulingPage() {
   const t = useTranslations();
   const [currentWeek, setCurrentWeek] = React.useState(() => {
@@ -109,15 +65,36 @@ export default function SchedulingPage() {
   const [selectedStaff, setSelectedStaff] = React.useState<string>('all');
 
   const weekDays = getWeekDays(currentWeek);
-  const schedules = generateMockSchedules(currentWeek);
+  const weekEnd = new Date(currentWeek);
+  weekEnd.setDate(weekEnd.getDate() + 6);
 
-  const filteredSchedules = selectedStaff === 'all'
-    ? schedules
-    : schedules.filter(s => s.staffId === selectedStaff);
+  const { data: schedulesData, isLoading: isLoadingSchedules, isError } = useWorkSchedules({
+    startDate: formatDateForApi(currentWeek),
+    endDate: formatDateForApi(weekEnd),
+    ...(selectedStaff !== 'all' && { userId: selectedStaff }),
+  });
 
-  const uniqueStaff = Array.from(new Set(filteredSchedules.map(s => s.staffId)))
-    .map(id => mockStaff.find(s => s.id === id)!)
-    .filter(Boolean);
+  const { data: timeOffData } = useTimeOffRequests({
+    status: 'PENDING',
+  });
+
+  const schedules = schedulesData?.data ?? [];
+  const pendingRequests = timeOffData?.meta?.total ?? 0;
+
+  // Extract unique staff from schedules
+  const uniqueStaff = React.useMemo(() => {
+    const staffMap = new Map<string, Staff>();
+    schedules.forEach(s => {
+      if (s.user && !staffMap.has(s.userId)) {
+        staffMap.set(s.userId, {
+          id: s.userId,
+          name: s.user.name,
+          role: s.user.role,
+        });
+      }
+    });
+    return Array.from(staffMap.values());
+  }, [schedules]);
 
   const goToPreviousWeek = () => {
     const prev = new Date(currentWeek);
@@ -138,16 +115,16 @@ export default function SchedulingPage() {
     setCurrentWeek(new Date(today.setDate(diff)));
   };
 
-  const stats = {
-    totalStaff: mockStaff.length,
-    workingToday: schedules.filter(s =>
-      s.date === new Date().toISOString().split('T')[0] && s.isWorkingDay
-    ).length,
-    onLeave: schedules.filter(s =>
-      s.date === new Date().toISOString().split('T')[0] && s.isOnLeave
-    ).length,
-    pendingRequests: 3,
-  };
+  const stats = React.useMemo(() => {
+    const today = formatDateForApi(new Date());
+    const todaySchedules = schedules.filter(s => s.date === today);
+    return {
+      totalStaff: uniqueStaff.length,
+      workingToday: todaySchedules.filter(s => s.isWorkingDay).length,
+      onLeave: todaySchedules.filter(s => !s.isWorkingDay && s.notes?.includes('leave')).length,
+      pendingRequests,
+    };
+  }, [schedules, uniqueStaff, pendingRequests]);
 
   return (
     <div className="space-y-6">
@@ -193,7 +170,11 @@ export default function SchedulingPage() {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">{t('scheduling.staff') || 'Total Staff'}</p>
-                <p className="text-2xl font-bold">{stats.totalStaff}</p>
+                {isLoadingSchedules ? (
+                  <Skeleton className="h-8 w-12" />
+                ) : (
+                  <p className="text-2xl font-bold">{stats.totalStaff}</p>
+                )}
               </div>
             </div>
           </CardContent>
@@ -206,7 +187,11 @@ export default function SchedulingPage() {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">{t('scheduling.workingToday') || 'Working Today'}</p>
-                <p className="text-2xl font-bold">{stats.workingToday}</p>
+                {isLoadingSchedules ? (
+                  <Skeleton className="h-8 w-12" />
+                ) : (
+                  <p className="text-2xl font-bold">{stats.workingToday}</p>
+                )}
               </div>
             </div>
           </CardContent>
@@ -219,7 +204,11 @@ export default function SchedulingPage() {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">{t('scheduling.onLeave') || 'On Leave'}</p>
-                <p className="text-2xl font-bold">{stats.onLeave}</p>
+                {isLoadingSchedules ? (
+                  <Skeleton className="h-8 w-12" />
+                ) : (
+                  <p className="text-2xl font-bold">{stats.onLeave}</p>
+                )}
               </div>
             </div>
           </CardContent>
@@ -232,7 +221,11 @@ export default function SchedulingPage() {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">{t('scheduling.pendingRequests') || 'Pending Requests'}</p>
-                <p className="text-2xl font-bold">{stats.pendingRequests}</p>
+                {isLoadingSchedules ? (
+                  <Skeleton className="h-8 w-12" />
+                ) : (
+                  <p className="text-2xl font-bold">{stats.pendingRequests}</p>
+                )}
               </div>
             </div>
           </CardContent>
@@ -263,7 +256,7 @@ export default function SchedulingPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">{t('common.all') || 'All Staff'}</SelectItem>
-                {mockStaff.map((staff) => (
+                {uniqueStaff.map((staff) => (
                   <SelectItem key={staff.id} value={staff.id}>
                     {staff.name}
                   </SelectItem>
@@ -274,6 +267,18 @@ export default function SchedulingPage() {
         </CardContent>
       </Card>
 
+      {/* Error State */}
+      {isError && (
+        <Card className="border-destructive">
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-2 text-destructive">
+              <AlertCircle className="h-5 w-5" />
+              <span>{t('common.errorLoading') || 'Error loading data'}</span>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Schedule Calendar */}
       <Card>
         <CardHeader>
@@ -283,78 +288,98 @@ export default function SchedulingPage() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse">
-              <thead>
-                <tr>
-                  <th className="border p-2 bg-muted text-start min-w-[150px]">
-                    {t('scheduling.staff') || 'Staff'}
-                  </th>
-                  {weekDays.map((day) => {
-                    const isToday = day.toDateString() === new Date().toDateString();
-                    const isWeekend = day.getDay() === 5 || day.getDay() === 6;
-                    return (
-                      <th
-                        key={day.toISOString()}
-                        className={`border p-2 text-center min-w-[100px] ${
-                          isToday ? 'bg-primary/10' : isWeekend ? 'bg-muted/50' : 'bg-muted'
-                        }`}
-                      >
-                        <div className="font-medium">{formatDate(day)}</div>
-                      </th>
-                    );
-                  })}
-                </tr>
-              </thead>
-              <tbody>
-                {uniqueStaff.map((staff) => (
-                  <tr key={staff.id}>
-                    <td className="border p-2">
-                      <Link
-                        href={`/scheduling/staff/${staff.id}`}
-                        className="hover:underline"
-                      >
-                        <div className="font-medium">{staff.name}</div>
-                        <div className="text-xs text-muted-foreground">
-                          {t(`roles.${staff.role.toLowerCase()}`) || staff.role}
-                        </div>
-                      </Link>
-                    </td>
+          {isLoadingSchedules ? (
+            <div className="space-y-4">
+              {[...Array(4)].map((_, i) => (
+                <div key={i} className="flex items-center gap-4">
+                  <Skeleton className="h-16 w-32" />
+                  {[...Array(7)].map((_, j) => (
+                    <Skeleton key={j} className="h-16 flex-1" />
+                  ))}
+                </div>
+              ))}
+            </div>
+          ) : uniqueStaff.length === 0 ? (
+            <div className="text-center py-12 text-muted-foreground">
+              {t('scheduling.noSchedules') || 'No schedules found'}
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse">
+                <thead>
+                  <tr>
+                    <th className="border p-2 bg-muted text-start min-w-[150px]">
+                      {t('scheduling.staff') || 'Staff'}
+                    </th>
                     {weekDays.map((day) => {
-                      const dateStr = day.toISOString().split('T')[0];
-                      const schedule = filteredSchedules.find(
-                        s => s.staffId === staff.id && s.date === dateStr
-                      );
                       const isToday = day.toDateString() === new Date().toDateString();
-
+                      const isWeekend = day.getDay() === 5 || day.getDay() === 6;
                       return (
-                        <td
+                        <th
                           key={day.toISOString()}
-                          className={`border p-2 text-center ${isToday ? 'bg-primary/5' : ''}`}
+                          className={`border p-2 text-center min-w-[100px] ${
+                            isToday ? 'bg-primary/10' : isWeekend ? 'bg-muted/50' : 'bg-muted'
+                          }`}
                         >
-                          {schedule?.isOnLeave ? (
-                            <Badge variant="warning" className="text-xs">
-                              {t(`scheduling.${schedule.leaveType?.toLowerCase()}`) || schedule.leaveType}
-                            </Badge>
-                          ) : schedule?.isWorkingDay ? (
-                            <div className="space-y-1">
-                              <Badge variant="success" className="text-xs">
-                                {schedule.startTime} - {schedule.endTime}
-                              </Badge>
-                            </div>
-                          ) : (
-                            <span className="text-xs text-muted-foreground">
-                              {t('scheduling.dayOff') || 'Off'}
-                            </span>
-                          )}
-                        </td>
+                          <div className="font-medium">{formatDate(day)}</div>
+                        </th>
                       );
                     })}
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {uniqueStaff.map((staff) => (
+                    <tr key={staff.id}>
+                      <td className="border p-2">
+                        <Link
+                          href={`/scheduling/staff/${staff.id}`}
+                          className="hover:underline"
+                        >
+                          <div className="font-medium">{staff.name}</div>
+                          <div className="text-xs text-muted-foreground">
+                            {t(`roles.${staff.role.toLowerCase()}`) || staff.role}
+                          </div>
+                        </Link>
+                      </td>
+                      {weekDays.map((day) => {
+                        const dateStr = formatDateForApi(day);
+                        const schedule = schedules.find(
+                          s => s.userId === staff.id && s.date === dateStr
+                        );
+                        const isToday = day.toDateString() === new Date().toDateString();
+                        const isWeekend = day.getDay() === 5 || day.getDay() === 6;
+
+                        return (
+                          <td
+                            key={day.toISOString()}
+                            className={`border p-2 text-center ${isToday ? 'bg-primary/5' : ''}`}
+                          >
+                            {schedule?.isWorkingDay ? (
+                              <div className="space-y-1">
+                                <Badge variant="success" className="text-xs">
+                                  {schedule.startTime} - {schedule.endTime}
+                                </Badge>
+                              </div>
+                            ) : schedule && schedule.notes?.toLowerCase().includes('leave') ? (
+                              <Badge variant="warning" className="text-xs">
+                                {t('scheduling.leave') || 'Leave'}
+                              </Badge>
+                            ) : isWeekend ? (
+                              <span className="text-xs text-muted-foreground">
+                                {t('scheduling.dayOff') || 'Off'}
+                              </span>
+                            ) : (
+                              <span className="text-xs text-muted-foreground">-</span>
+                            )}
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

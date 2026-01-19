@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   Table,
   TableBody,
@@ -38,93 +39,10 @@ import {
   AlertTriangle,
   TrendingDown,
   Boxes,
+  AlertCircle,
 } from 'lucide-react';
-
-interface InventoryItem {
-  id: string;
-  sku: string;
-  name: string;
-  category?: { id: string; name: string };
-  supplier?: { id: string; name: string };
-  unit: string;
-  quantityInStock: number;
-  reorderPoint: number;
-  costPrice?: number;
-  sellingPrice?: number;
-  expiryDate?: string;
-  active: boolean;
-}
-
-// Mock data for development
-const mockItems: InventoryItem[] = [
-  {
-    id: '1',
-    sku: 'MED-001',
-    name: 'Paracetamol 500mg',
-    category: { id: '1', name: 'Medications' },
-    supplier: { id: '1', name: 'PharmaCo Ltd' },
-    unit: 'BOXES',
-    quantityInStock: 150,
-    reorderPoint: 50,
-    costPrice: 5.00,
-    sellingPrice: 8.00,
-    expiryDate: '2025-12-31',
-    active: true,
-  },
-  {
-    id: '2',
-    sku: 'MED-002',
-    name: 'Ibuprofen 400mg',
-    category: { id: '1', name: 'Medications' },
-    supplier: { id: '1', name: 'PharmaCo Ltd' },
-    unit: 'BOXES',
-    quantityInStock: 30,
-    reorderPoint: 50,
-    costPrice: 6.00,
-    sellingPrice: 10.00,
-    expiryDate: '2025-06-30',
-    active: true,
-  },
-  {
-    id: '3',
-    sku: 'SUP-001',
-    name: 'Surgical Gloves (M)',
-    category: { id: '2', name: 'Supplies' },
-    supplier: { id: '2', name: 'MedSupply Inc' },
-    unit: 'BOXES',
-    quantityInStock: 200,
-    reorderPoint: 100,
-    costPrice: 15.00,
-    sellingPrice: 20.00,
-    active: true,
-  },
-  {
-    id: '4',
-    sku: 'SUP-002',
-    name: 'Syringes 5ml',
-    category: { id: '2', name: 'Supplies' },
-    supplier: { id: '2', name: 'MedSupply Inc' },
-    unit: 'PIECES',
-    quantityInStock: 0,
-    reorderPoint: 200,
-    costPrice: 0.50,
-    sellingPrice: 1.00,
-    active: true,
-  },
-  {
-    id: '5',
-    sku: 'EQP-001',
-    name: 'Blood Pressure Monitor',
-    category: { id: '3', name: 'Equipment' },
-    supplier: { id: '3', name: 'HealthTech' },
-    unit: 'PIECES',
-    quantityInStock: 5,
-    reorderPoint: 2,
-    costPrice: 150.00,
-    sellingPrice: 200.00,
-    active: true,
-  },
-];
+import { useInventoryItems, useLowStockItems, type InventoryItem } from '@/hooks/use-inventory';
+import { useDebouncedValue } from '@/hooks/use-debounced-value';
 
 export default function InventoryPage() {
   const t = useTranslations();
@@ -132,27 +50,32 @@ export default function InventoryPage() {
   const [statusFilter, setStatusFilter] = React.useState<string>('all');
   const [stockFilter, setStockFilter] = React.useState<string>('all');
 
-  const filteredItems = mockItems.filter((item) => {
-    const matchesSearch =
-      item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.sku.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus =
-      statusFilter === 'all' ||
-      (statusFilter === 'active' && item.active) ||
-      (statusFilter === 'inactive' && !item.active);
-    const matchesStock =
-      stockFilter === 'all' ||
-      (stockFilter === 'low' && item.quantityInStock <= item.reorderPoint && item.quantityInStock > 0) ||
-      (stockFilter === 'out' && item.quantityInStock === 0);
-    return matchesSearch && matchesStatus && matchesStock;
-  });
+  const debouncedSearch = useDebouncedValue(searchQuery, 300);
 
-  const stats = {
-    totalItems: mockItems.length,
-    lowStock: mockItems.filter(i => i.quantityInStock <= i.reorderPoint && i.quantityInStock > 0).length,
-    outOfStock: mockItems.filter(i => i.quantityInStock === 0).length,
-    totalValue: mockItems.reduce((sum, i) => sum + (i.quantityInStock * (i.costPrice || 0)), 0),
+  const buildParams = () => {
+    const params: Record<string, string> = {};
+    if (debouncedSearch) params.search = debouncedSearch;
+    if (statusFilter !== 'all') params.active = statusFilter === 'active' ? 'true' : 'false';
+    if (stockFilter === 'low') params.lowStock = 'true';
+    if (stockFilter === 'out') params.outOfStock = 'true';
+    return params;
   };
+
+  const { data, isLoading, isError, error } = useInventoryItems(buildParams());
+  const { data: lowStockData } = useLowStockItems();
+
+  const items = data?.data ?? [];
+  const totalItems = data?.meta?.total ?? items.length;
+
+  // Calculate stats
+  const stats = React.useMemo(() => {
+    return {
+      totalItems,
+      lowStock: lowStockData?.data?.filter(i => i.quantityInStock > 0).length ?? 0,
+      outOfStock: items.filter(i => i.quantityInStock === 0).length,
+      totalValue: items.reduce((sum, i) => sum + (i.quantityInStock * (i.costPrice || 0)), 0),
+    };
+  }, [items, totalItems, lowStockData]);
 
   const getStockStatus = (item: InventoryItem) => {
     if (item.quantityInStock === 0) return 'out';
@@ -198,7 +121,11 @@ export default function InventoryPage() {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">{t('inventory.totalItems') || 'Total Items'}</p>
-                <p className="text-2xl font-bold">{stats.totalItems}</p>
+                {isLoading ? (
+                  <Skeleton className="h-8 w-12" />
+                ) : (
+                  <p className="text-2xl font-bold">{stats.totalItems}</p>
+                )}
               </div>
             </div>
           </CardContent>
@@ -211,7 +138,11 @@ export default function InventoryPage() {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">{t('inventory.lowStock') || 'Low Stock'}</p>
-                <p className="text-2xl font-bold">{stats.lowStock}</p>
+                {isLoading ? (
+                  <Skeleton className="h-8 w-12" />
+                ) : (
+                  <p className="text-2xl font-bold">{stats.lowStock}</p>
+                )}
               </div>
             </div>
           </CardContent>
@@ -224,7 +155,11 @@ export default function InventoryPage() {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">{t('inventory.outOfStock') || 'Out of Stock'}</p>
-                <p className="text-2xl font-bold">{stats.outOfStock}</p>
+                {isLoading ? (
+                  <Skeleton className="h-8 w-12" />
+                ) : (
+                  <p className="text-2xl font-bold">{stats.outOfStock}</p>
+                )}
               </div>
             </div>
           </CardContent>
@@ -237,7 +172,11 @@ export default function InventoryPage() {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">{t('inventory.totalValue') || 'Total Value'}</p>
-                <p className="text-2xl font-bold">${stats.totalValue.toFixed(2)}</p>
+                {isLoading ? (
+                  <Skeleton className="h-8 w-16" />
+                ) : (
+                  <p className="text-2xl font-bold">${stats.totalValue.toFixed(2)}</p>
+                )}
               </div>
             </div>
           </CardContent>
@@ -281,117 +220,152 @@ export default function InventoryPage() {
         </CardContent>
       </Card>
 
+      {/* Error State */}
+      {isError && (
+        <Card className="border-destructive">
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-2 text-destructive">
+              <AlertCircle className="h-5 w-5" />
+              <span>
+                {(error as any)?.message || t('common.errorLoading') || 'Error loading data'}
+              </span>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Items Table */}
       <Card>
         <CardHeader>
           <CardTitle>{t('inventory.items') || 'Items'}</CardTitle>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>{t('inventory.sku') || 'SKU'}</TableHead>
-                <TableHead>{t('inventory.itemName') || 'Name'}</TableHead>
-                <TableHead>{t('inventory.category') || 'Category'}</TableHead>
-                <TableHead>{t('inventory.quantity') || 'Quantity'}</TableHead>
-                <TableHead>{t('inventory.unit') || 'Unit'}</TableHead>
-                <TableHead>{t('inventory.price') || 'Price'}</TableHead>
-                <TableHead>{t('common.status') || 'Status'}</TableHead>
-                <TableHead className="w-[70px]">{t('common.actions') || 'Actions'}</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredItems.map((item) => {
-                const stockStatus = getStockStatus(item);
-                return (
-                  <TableRow key={item.id}>
-                    <TableCell className="font-medium">
-                      <Link
-                        href={`/inventory/${item.id}`}
-                        className="text-primary hover:underline"
-                      >
-                        {item.sku}
-                      </Link>
-                    </TableCell>
-                    <TableCell>
-                      <div>
-                        <p className="font-medium">{item.name}</p>
-                        {item.supplier && (
-                          <p className="text-sm text-muted-foreground">
-                            {item.supplier.name}
-                          </p>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell>{item.category?.name || '-'}</TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <span className={stockStatus === 'out' ? 'text-destructive font-medium' : stockStatus === 'low' ? 'text-warning font-medium' : ''}>
-                          {item.quantityInStock}
-                        </span>
-                        {stockStatus === 'low' && (
-                          <AlertTriangle className="h-4 w-4 text-warning" />
-                        )}
-                        {stockStatus === 'out' && (
-                          <TrendingDown className="h-4 w-4 text-destructive" />
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell>{item.unit}</TableCell>
-                    <TableCell>
-                      {item.sellingPrice ? `$${item.sellingPrice.toFixed(2)}` : '-'}
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={
-                          stockStatus === 'out'
-                            ? 'destructive'
+          {isLoading ? (
+            <div className="space-y-4">
+              {[...Array(5)].map((_, i) => (
+                <div key={i} className="flex items-center gap-4">
+                  <Skeleton className="h-12 w-20" />
+                  <Skeleton className="h-12 flex-1" />
+                  <Skeleton className="h-12 w-24" />
+                  <Skeleton className="h-12 w-16" />
+                  <Skeleton className="h-12 w-16" />
+                  <Skeleton className="h-12 w-20" />
+                  <Skeleton className="h-12 w-20" />
+                  <Skeleton className="h-12 w-10" />
+                </div>
+              ))}
+            </div>
+          ) : items.length === 0 ? (
+            <div className="text-center py-12 text-muted-foreground">
+              {t('inventory.noItems') || 'No items found'}
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>{t('inventory.sku') || 'SKU'}</TableHead>
+                  <TableHead>{t('inventory.itemName') || 'Name'}</TableHead>
+                  <TableHead>{t('inventory.category') || 'Category'}</TableHead>
+                  <TableHead>{t('inventory.quantity') || 'Quantity'}</TableHead>
+                  <TableHead>{t('inventory.unit') || 'Unit'}</TableHead>
+                  <TableHead>{t('inventory.price') || 'Price'}</TableHead>
+                  <TableHead>{t('common.status') || 'Status'}</TableHead>
+                  <TableHead className="w-[70px]">{t('common.actions') || 'Actions'}</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {items.map((item) => {
+                  const stockStatus = getStockStatus(item);
+                  return (
+                    <TableRow key={item.id}>
+                      <TableCell className="font-medium">
+                        <Link
+                          href={`/inventory/${item.id}`}
+                          className="text-primary hover:underline"
+                        >
+                          {item.sku}
+                        </Link>
+                      </TableCell>
+                      <TableCell>
+                        <div>
+                          <p className="font-medium">{item.name}</p>
+                          {item.supplier && (
+                            <p className="text-sm text-muted-foreground">
+                              {item.supplier.name}
+                            </p>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>{item.category?.name || '-'}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <span className={stockStatus === 'out' ? 'text-destructive font-medium' : stockStatus === 'low' ? 'text-warning font-medium' : ''}>
+                            {item.quantityInStock}
+                          </span>
+                          {stockStatus === 'low' && (
+                            <AlertTriangle className="h-4 w-4 text-warning" />
+                          )}
+                          {stockStatus === 'out' && (
+                            <TrendingDown className="h-4 w-4 text-destructive" />
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>{item.unit}</TableCell>
+                      <TableCell>
+                        {item.sellingPrice ? `$${item.sellingPrice.toFixed(2)}` : '-'}
+                      </TableCell>
+                      <TableCell>
+                        <Badge
+                          variant={
+                            stockStatus === 'out'
+                              ? 'destructive'
+                              : stockStatus === 'low'
+                              ? 'warning'
+                              : 'success'
+                          }
+                        >
+                          {stockStatus === 'out'
+                            ? t('inventory.outOfStock') || 'Out of Stock'
                             : stockStatus === 'low'
-                            ? 'warning'
-                            : 'success'
-                        }
-                      >
-                        {stockStatus === 'out'
-                          ? t('inventory.outOfStock') || 'Out of Stock'
-                          : stockStatus === 'low'
-                          ? t('inventory.lowStock') || 'Low Stock'
-                          : t('inventory.inStock') || 'In Stock'}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem asChild>
-                            <Link href={`/inventory/${item.id}`}>
-                              <Eye className="me-2 h-4 w-4" />
-                              {t('common.view') || 'View'}
-                            </Link>
-                          </DropdownMenuItem>
-                          <DropdownMenuItem asChild>
-                            <Link href={`/inventory/${item.id}/edit`}>
-                              <Edit className="me-2 h-4 w-4" />
-                              {t('common.edit') || 'Edit'}
-                            </Link>
-                          </DropdownMenuItem>
-                          <DropdownMenuItem asChild>
-                            <Link href={`/inventory/${item.id}?adjust=true`}>
-                              <Package className="me-2 h-4 w-4" />
-                              {t('inventory.adjustStock') || 'Adjust Stock'}
-                            </Link>
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
+                            ? t('inventory.lowStock') || 'Low Stock'
+                            : t('inventory.inStock') || 'In Stock'}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon">
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem asChild>
+                              <Link href={`/inventory/${item.id}`}>
+                                <Eye className="me-2 h-4 w-4" />
+                                {t('common.view') || 'View'}
+                              </Link>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem asChild>
+                              <Link href={`/inventory/${item.id}/edit`}>
+                                <Edit className="me-2 h-4 w-4" />
+                                {t('common.edit') || 'Edit'}
+                              </Link>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem asChild>
+                              <Link href={`/inventory/${item.id}?adjust=true`}>
+                                <Package className="me-2 h-4 w-4" />
+                                {t('inventory.adjustStock') || 'Adjust Stock'}
+                              </Link>
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          )}
         </CardContent>
       </Card>
     </div>

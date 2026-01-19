@@ -3,6 +3,7 @@ import { getMessages } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 
 import { isRTL, SUPPORTED_LOCALES, type SupportedLocale } from '@myclinic/i18n';
+import { QueryProvider } from '@/providers/query-provider';
 
 export function generateStaticParams() {
   return SUPPORTED_LOCALES.map((locale) => ({ locale }));
@@ -27,9 +28,11 @@ export default async function LocaleLayout({
 
   return (
     <div lang={locale} dir={direction}>
-      <NextIntlClientProvider messages={messages}>
-        {children}
-      </NextIntlClientProvider>
+      <QueryProvider>
+        <NextIntlClientProvider messages={messages}>
+          {children}
+        </NextIntlClientProvider>
+      </QueryProvider>
     </div>
   );
 }

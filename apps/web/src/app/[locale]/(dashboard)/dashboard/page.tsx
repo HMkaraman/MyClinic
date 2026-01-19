@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useAuthStore } from '@/stores/auth-store';
 import {
   Users,
@@ -17,19 +18,23 @@ import {
   ArrowUpRight,
   ArrowDownRight,
 } from 'lucide-react';
+import { useAppointments, useAppointmentTodayStats } from '@/hooks/use-appointments';
+import { usePatients } from '@/hooks/use-patients';
+import { useFinanceStats } from '@/hooks/use-invoices';
 
 interface StatCardProps {
   title: string;
   value: string | number;
   description: string;
   icon: React.ElementType;
+  isLoading?: boolean;
   trend?: {
     value: number;
     isPositive: boolean;
   };
 }
 
-function StatCard({ title, value, description, icon: Icon, trend }: StatCardProps) {
+function StatCard({ title, value, description, icon: Icon, isLoading, trend }: StatCardProps) {
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -37,7 +42,11 @@ function StatCard({ title, value, description, icon: Icon, trend }: StatCardProp
         <Icon className="h-4 w-4 text-muted-foreground" />
       </CardHeader>
       <CardContent>
-        <div className="text-2xl font-bold">{value}</div>
+        {isLoading ? (
+          <Skeleton className="h-8 w-20" />
+        ) : (
+          <div className="text-2xl font-bold">{value}</div>
+        )}
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
           {trend && (
             <span className={trend.isPositive ? 'text-green-600' : 'text-red-600'}>
@@ -56,31 +65,41 @@ function StatCard({ title, value, description, icon: Icon, trend }: StatCardProp
   );
 }
 
-interface AppointmentItem {
-  id: string;
-  patientName: string;
-  time: string;
-  service: string;
-  status: 'confirmed' | 'arrived' | 'pending';
-}
-
-const mockAppointments: AppointmentItem[] = [
-  { id: '1', patientName: 'أحمد محمد', time: '09:00', service: 'فحص عام', status: 'confirmed' },
-  { id: '2', patientName: 'فاطمة علي', time: '09:30', service: 'تنظيف أسنان', status: 'arrived' },
-  { id: '3', patientName: 'محمود حسن', time: '10:00', service: 'استشارة', status: 'pending' },
-  { id: '4', patientName: 'نور الدين', time: '10:30', service: 'متابعة', status: 'confirmed' },
-  { id: '5', patientName: 'سارة أحمد', time: '11:00', service: 'فحص عام', status: 'pending' },
-];
-
 const statusColors = {
-  confirmed: 'success',
-  arrived: 'info',
-  pending: 'warning',
+  CONFIRMED: 'success',
+  ARRIVED: 'info',
+  NEW: 'warning',
+  IN_PROGRESS: 'warning',
+  COMPLETED: 'success',
+  NO_SHOW: 'destructive',
+  CANCELLED: 'destructive',
 } as const;
+
+function getDateString(): string {
+  return new Date().toISOString().split('T')[0] as string;
+}
 
 export default function DashboardPage() {
   const t = useTranslations();
   const { user } = useAuthStore();
+
+  // Fetch today's appointments
+  const { data: todayStats, isLoading: isLoadingTodayStats } = useAppointmentTodayStats();
+
+  // Fetch today's appointments list
+  const { data: appointmentsData, isLoading: isLoadingAppointments } = useAppointments({
+    date: getDateString(),
+    limit: 5,
+  });
+
+  // Fetch patients count
+  const { data: patientsData, isLoading: isLoadingPatients } = usePatients({ limit: 1 });
+
+  // Fetch finance stats
+  const { data: financeStats, isLoading: isLoadingFinance } = useFinanceStats();
+
+  const appointments = appointmentsData?.data ?? [];
+  const totalPatients = patientsData?.meta?.total ?? 0;
 
   return (
     <div className="space-y-6">
@@ -106,30 +125,34 @@ export default function DashboardPage() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <StatCard
           title={t('dashboard.todayAppointments')}
-          value="24"
+          value={todayStats?.total ?? 0}
           description={t('dashboard.fromYesterday')}
           icon={Calendar}
+          isLoading={isLoadingTodayStats}
           trend={{ value: 12, isPositive: true }}
         />
         <StatCard
           title={t('dashboard.totalPatients')}
-          value="1,234"
+          value={totalPatients.toLocaleString()}
           description={t('dashboard.thisMonth')}
           icon={Users}
+          isLoading={isLoadingPatients}
           trend={{ value: 8, isPositive: true }}
         />
         <StatCard
           title={t('dashboard.todayRevenue')}
-          value="$2,450"
+          value={`${(financeStats?.todayRevenue ?? 0).toLocaleString()} IQD`}
           description={t('dashboard.fromYesterday')}
           icon={Receipt}
-          trend={{ value: 5, isPositive: false }}
+          isLoading={isLoadingFinance}
+          trend={{ value: financeStats?.revenueChange ?? 0, isPositive: (financeStats?.revenueChange ?? 0) >= 0 }}
         />
         <StatCard
           title={t('dashboard.conversionRate')}
-          value="68%"
+          value={todayStats?.total ? `${Math.round((todayStats.completed / todayStats.total) * 100)}%` : '0%'}
           description={t('dashboard.thisWeek')}
           icon={TrendingUp}
+          isLoading={isLoadingTodayStats}
           trend={{ value: 3, isPositive: true }}
         />
       </div>
@@ -150,30 +173,50 @@ export default function DashboardPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {mockAppointments.map((apt) => (
-                <div
-                  key={apt.id}
-                  className="flex items-center justify-between rounded-lg border p-3"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
-                      <Clock className="h-5 w-5" />
+            {isLoadingAppointments ? (
+              <div className="space-y-4">
+                {[...Array(5)].map((_, i) => (
+                  <div key={i} className="flex items-center gap-4">
+                    <Skeleton className="h-10 w-10 rounded-full" />
+                    <div className="flex-1">
+                      <Skeleton className="h-4 w-32 mb-2" />
+                      <Skeleton className="h-3 w-24" />
                     </div>
-                    <div>
-                      <p className="font-medium">{apt.patientName}</p>
-                      <p className="text-sm text-muted-foreground">{apt.service}</p>
+                    <Skeleton className="h-6 w-20" />
+                    <Skeleton className="h-4 w-12" />
+                  </div>
+                ))}
+              </div>
+            ) : appointments.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                {t('dashboard.noAppointmentsToday') || 'No appointments today'}
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {appointments.map((apt) => (
+                  <div
+                    key={apt.id}
+                    className="flex items-center justify-between rounded-lg border p-3"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
+                        <Clock className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <p className="font-medium">{apt.patient?.name}</p>
+                        <p className="text-sm text-muted-foreground">{apt.service?.name || t('appointments.consultation')}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <Badge variant={statusColors[apt.status] || 'secondary'}>
+                        {t(`appointments.status.${apt.status.toLowerCase()}`)}
+                      </Badge>
+                      <span className="text-sm font-medium">{apt.startTime}</span>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <Badge variant={statusColors[apt.status]}>
-                      {t(`appointments.status.${apt.status}`)}
-                    </Badge>
-                    <span className="text-sm font-medium">{apt.time}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -201,7 +244,9 @@ export default function DashboardPage() {
                 <div className="flex items-center justify-between rounded-lg bg-red-50 dark:bg-red-900/20 p-3">
                   <div>
                     <p className="font-medium">{t('dashboard.unpaidInvoices')}</p>
-                    <p className="text-sm text-muted-foreground">3 {t('dashboard.invoicesPending')}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {financeStats?.pendingPayments ? `${financeStats.pendingPayments.toLocaleString()} IQD` : '0 IQD'} {t('dashboard.invoicesPending')}
+                    </p>
                   </div>
                   <Button size="sm" variant="outline">
                     {t('common.view')}
@@ -228,19 +273,37 @@ export default function DashboardPage() {
             <CardContent>
               <div className="grid grid-cols-2 gap-4">
                 <div className="text-center">
-                  <p className="text-3xl font-bold text-green-600">18</p>
+                  {isLoadingTodayStats ? (
+                    <Skeleton className="h-9 w-12 mx-auto mb-2" />
+                  ) : (
+                    <p className="text-3xl font-bold text-green-600">{todayStats?.completed ?? 0}</p>
+                  )}
                   <p className="text-sm text-muted-foreground">{t('dashboard.completed')}</p>
                 </div>
                 <div className="text-center">
-                  <p className="text-3xl font-bold text-yellow-600">4</p>
+                  {isLoadingTodayStats ? (
+                    <Skeleton className="h-9 w-12 mx-auto mb-2" />
+                  ) : (
+                    <p className="text-3xl font-bold text-yellow-600">{todayStats?.waiting ?? 0}</p>
+                  )}
                   <p className="text-sm text-muted-foreground">{t('dashboard.waiting')}</p>
                 </div>
                 <div className="text-center">
-                  <p className="text-3xl font-bold text-red-600">2</p>
+                  {isLoadingTodayStats ? (
+                    <Skeleton className="h-9 w-12 mx-auto mb-2" />
+                  ) : (
+                    <p className="text-3xl font-bold text-red-600">{todayStats?.noShow ?? 0}</p>
+                  )}
                   <p className="text-sm text-muted-foreground">{t('dashboard.noShow')}</p>
                 </div>
                 <div className="text-center">
-                  <p className="text-3xl font-bold text-blue-600">6</p>
+                  {isLoadingTodayStats ? (
+                    <Skeleton className="h-9 w-12 mx-auto mb-2" />
+                  ) : (
+                    <p className="text-3xl font-bold text-blue-600">
+                      {(todayStats?.total ?? 0) - (todayStats?.completed ?? 0) - (todayStats?.noShow ?? 0) - (todayStats?.cancelled ?? 0)}
+                    </p>
+                  )}
                   <p className="text-sm text-muted-foreground">{t('dashboard.upcoming')}</p>
                 </div>
               </div>

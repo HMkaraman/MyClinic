@@ -6,6 +6,7 @@ import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   Table,
   TableBody,
@@ -21,78 +22,38 @@ import {
   CreditCard,
   ArrowRight,
   Plus,
+  AlertCircle,
 } from 'lucide-react';
+import {
+  useFinanceStats,
+  useRecentInvoices,
+  useRecentPayments,
+  type PaymentMethod,
+} from '@/hooks/use-invoices';
 
-const mockStats = {
-  todayRevenue: 450000,
-  weekRevenue: 2500000,
-  monthRevenue: 8500000,
-  pendingPayments: 575000,
-  revenueChange: 12.5,
-};
-
-const mockRecentInvoices = [
-  {
-    id: '1',
-    number: 'INV-2024-001',
-    patientName: 'أحمد محمد علي',
-    date: '2024-01-18',
-    total: 250000,
-    status: 'paid',
-  },
-  {
-    id: '2',
-    number: 'INV-2024-002',
-    patientName: 'فاطمة حسين',
-    date: '2024-01-17',
-    total: 150000,
-    status: 'partial',
-  },
-  {
-    id: '3',
-    number: 'INV-2024-003',
-    patientName: 'محمود سعيد',
-    date: '2024-01-16',
-    total: 100000,
-    status: 'pending',
-  },
-];
-
-const mockRecentPayments = [
-  {
-    id: '1',
-    invoiceNumber: 'INV-2024-001',
-    patientName: 'أحمد محمد علي',
-    date: '2024-01-18',
-    amount: 250000,
-    method: 'CASH',
-  },
-  {
-    id: '2',
-    invoiceNumber: 'INV-2024-002',
-    patientName: 'فاطمة حسين',
-    date: '2024-01-17',
-    amount: 75000,
-    method: 'CARD',
-  },
-  {
-    id: '3',
-    invoiceNumber: 'INV-2024-004',
-    patientName: 'نور الهدى',
-    date: '2024-01-15',
-    amount: 300000,
-    method: 'CASH',
-  },
-];
-
-const paymentMethodLabels: Record<string, string> = {
+const paymentMethodLabels: Record<PaymentMethod, string> = {
   CASH: 'نقدي',
   CARD: 'بطاقة',
   BANK_TRANSFER: 'تحويل بنكي',
+  INSURANCE: 'تأمين',
+  OTHER: 'أخرى',
+};
+
+const statusVariants: Record<string, 'success' | 'warning' | 'secondary' | 'destructive'> = {
+  PAID: 'success',
+  PARTIAL: 'warning',
+  PENDING: 'secondary',
+  DRAFT: 'secondary',
+  CANCELLED: 'destructive',
+  REFUNDED: 'destructive',
 };
 
 export default function FinancePage() {
   const t = useTranslations();
+
+  const { data: stats, isLoading: isLoadingStats, isError: isStatsError } = useFinanceStats();
+  const { data: recentInvoices, isLoading: isLoadingInvoices } = useRecentInvoices(5);
+  const { data: recentPayments, isLoading: isLoadingPayments } = useRecentPayments(5);
 
   return (
     <div className="space-y-6">
@@ -114,6 +75,18 @@ export default function FinancePage() {
         </Button>
       </div>
 
+      {/* Error State */}
+      {isStatsError && (
+        <Card className="border-destructive">
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-2 text-destructive">
+              <AlertCircle className="h-5 w-5" />
+              <span>{t('common.errorLoading') || 'Error loading data'}</span>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
@@ -123,7 +96,13 @@ export default function FinancePage() {
                 <DollarSign className="h-5 w-5 text-green-600 dark:text-green-400" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{mockStats.todayRevenue.toLocaleString()}</p>
+                {isLoadingStats ? (
+                  <Skeleton className="h-8 w-24" />
+                ) : (
+                  <p className="text-2xl font-bold">
+                    {(stats?.todayRevenue ?? 0).toLocaleString()}
+                  </p>
+                )}
                 <p className="text-sm text-muted-foreground">{t('finance.todayRevenue')} (IQD)</p>
               </div>
             </div>
@@ -136,7 +115,13 @@ export default function FinancePage() {
                 <TrendingUp className="h-5 w-5 text-blue-600 dark:text-blue-400" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{mockStats.weekRevenue.toLocaleString()}</p>
+                {isLoadingStats ? (
+                  <Skeleton className="h-8 w-24" />
+                ) : (
+                  <p className="text-2xl font-bold">
+                    {(stats?.weekRevenue ?? 0).toLocaleString()}
+                  </p>
+                )}
                 <p className="text-sm text-muted-foreground">{t('finance.weekRevenue')} (IQD)</p>
               </div>
             </div>
@@ -149,7 +134,13 @@ export default function FinancePage() {
                 <Receipt className="h-5 w-5 text-purple-600 dark:text-purple-400" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{mockStats.monthRevenue.toLocaleString()}</p>
+                {isLoadingStats ? (
+                  <Skeleton className="h-8 w-24" />
+                ) : (
+                  <p className="text-2xl font-bold">
+                    {(stats?.monthRevenue ?? 0).toLocaleString()}
+                  </p>
+                )}
                 <p className="text-sm text-muted-foreground">{t('finance.monthRevenue')} (IQD)</p>
               </div>
             </div>
@@ -162,7 +153,13 @@ export default function FinancePage() {
                 <CreditCard className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{mockStats.pendingPayments.toLocaleString()}</p>
+                {isLoadingStats ? (
+                  <Skeleton className="h-8 w-24" />
+                ) : (
+                  <p className="text-2xl font-bold">
+                    {(stats?.pendingPayments ?? 0).toLocaleString()}
+                  </p>
+                )}
                 <p className="text-sm text-muted-foreground">{t('finance.pendingPayments')} (IQD)</p>
               </div>
             </div>
@@ -228,45 +225,54 @@ export default function FinancePage() {
             </div>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>{t('finance.invoiceNumber')}</TableHead>
-                  <TableHead>{t('patients.patientName')}</TableHead>
-                  <TableHead>{t('finance.total')}</TableHead>
-                  <TableHead>{t('common.status')}</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {mockRecentInvoices.map((invoice) => (
-                  <TableRow key={invoice.id}>
-                    <TableCell>
-                      <Link
-                        href={`/finance/invoices/${invoice.id}`}
-                        className="text-primary hover:underline"
-                      >
-                        {invoice.number}
-                      </Link>
-                    </TableCell>
-                    <TableCell>{invoice.patientName}</TableCell>
-                    <TableCell>{invoice.total.toLocaleString()} IQD</TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={
-                          invoice.status === 'paid'
-                            ? 'success'
-                            : invoice.status === 'partial'
-                            ? 'warning'
-                            : 'secondary'
-                        }
-                      >
-                        {t(`finance.status.${invoice.status}`)}
-                      </Badge>
-                    </TableCell>
-                  </TableRow>
+            {isLoadingInvoices ? (
+              <div className="space-y-4">
+                {[...Array(3)].map((_, i) => (
+                  <div key={i} className="flex items-center gap-4">
+                    <Skeleton className="h-10 w-24" />
+                    <Skeleton className="h-10 flex-1" />
+                    <Skeleton className="h-10 w-24" />
+                    <Skeleton className="h-10 w-20" />
+                  </div>
                 ))}
-              </TableBody>
-            </Table>
+              </div>
+            ) : !recentInvoices || recentInvoices.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                {t('finance.noInvoices') || 'No invoices yet'}
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>{t('finance.invoiceNumber')}</TableHead>
+                    <TableHead>{t('patients.patientName')}</TableHead>
+                    <TableHead>{t('finance.total')}</TableHead>
+                    <TableHead>{t('common.status')}</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {recentInvoices.map((invoice) => (
+                    <TableRow key={invoice.id}>
+                      <TableCell>
+                        <Link
+                          href={`/finance/invoices/${invoice.id}`}
+                          className="text-primary hover:underline"
+                        >
+                          {invoice.invoiceNumber}
+                        </Link>
+                      </TableCell>
+                      <TableCell>{invoice.patient?.name}</TableCell>
+                      <TableCell>{invoice.total.toLocaleString()} IQD</TableCell>
+                      <TableCell>
+                        <Badge variant={statusVariants[invoice.status] || 'secondary'}>
+                          {t(`finance.status.${invoice.status.toLowerCase()}`)}
+                        </Badge>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
           </CardContent>
         </Card>
 
@@ -284,26 +290,45 @@ export default function FinancePage() {
             </div>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>{t('finance.invoiceNumber')}</TableHead>
-                  <TableHead>{t('patients.patientName')}</TableHead>
-                  <TableHead>{t('finance.amount')}</TableHead>
-                  <TableHead>{t('finance.paymentMethod')}</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {mockRecentPayments.map((payment) => (
-                  <TableRow key={payment.id}>
-                    <TableCell>{payment.invoiceNumber}</TableCell>
-                    <TableCell>{payment.patientName}</TableCell>
-                    <TableCell>{payment.amount.toLocaleString()} IQD</TableCell>
-                    <TableCell>{paymentMethodLabels[payment.method]}</TableCell>
-                  </TableRow>
+            {isLoadingPayments ? (
+              <div className="space-y-4">
+                {[...Array(3)].map((_, i) => (
+                  <div key={i} className="flex items-center gap-4">
+                    <Skeleton className="h-10 w-24" />
+                    <Skeleton className="h-10 flex-1" />
+                    <Skeleton className="h-10 w-24" />
+                    <Skeleton className="h-10 w-20" />
+                  </div>
                 ))}
-              </TableBody>
-            </Table>
+              </div>
+            ) : !recentPayments || recentPayments.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                {t('finance.noPayments') || 'No payments yet'}
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>{t('finance.invoiceNumber')}</TableHead>
+                    <TableHead>{t('common.date')}</TableHead>
+                    <TableHead>{t('finance.amount')}</TableHead>
+                    <TableHead>{t('finance.paymentMethod')}</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {recentPayments.map((payment) => (
+                    <TableRow key={payment.id}>
+                      <TableCell>{payment.invoiceId}</TableCell>
+                      <TableCell>{new Date(payment.createdAt).toLocaleDateString()}</TableCell>
+                      <TableCell>{payment.amount.toLocaleString()} IQD</TableCell>
+                      <TableCell>
+                        {paymentMethodLabels[payment.method] || payment.method}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
           </CardContent>
         </Card>
       </div>

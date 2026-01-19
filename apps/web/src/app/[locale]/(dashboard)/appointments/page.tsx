@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   Table,
   TableBody,
@@ -43,98 +44,32 @@ import {
   List,
   ChevronLeft,
   ChevronRight,
+  AlertCircle,
 } from 'lucide-react';
-
-interface Appointment {
-  id: string;
-  patientName: string;
-  patientPhone: string;
-  doctorName: string;
-  service: string;
-  date: string;
-  time: string;
-  duration: number;
-  status: 'new' | 'confirmed' | 'arrived' | 'in_progress' | 'completed' | 'no_show' | 'cancelled';
-}
-
-const mockAppointments: Appointment[] = [
-  {
-    id: '1',
-    patientName: 'أحمد محمد',
-    patientPhone: '+964 750 123 4567',
-    doctorName: 'د. سارة أحمد',
-    service: 'فحص عام',
-    date: '2024-01-18',
-    time: '09:00',
-    duration: 30,
-    status: 'confirmed',
-  },
-  {
-    id: '2',
-    patientName: 'فاطمة حسين',
-    patientPhone: '+964 750 234 5678',
-    doctorName: 'د. محمد علي',
-    service: 'تنظيف أسنان',
-    date: '2024-01-18',
-    time: '09:30',
-    duration: 45,
-    status: 'arrived',
-  },
-  {
-    id: '3',
-    patientName: 'محمود سعيد',
-    patientPhone: '+964 750 345 6789',
-    doctorName: 'د. سارة أحمد',
-    service: 'استشارة',
-    date: '2024-01-18',
-    time: '10:00',
-    duration: 30,
-    status: 'new',
-  },
-  {
-    id: '4',
-    patientName: 'نور الهدى',
-    patientPhone: '+964 750 456 7890',
-    doctorName: 'د. أحمد خالد',
-    service: 'حشوة',
-    date: '2024-01-18',
-    time: '10:30',
-    duration: 60,
-    status: 'confirmed',
-  },
-  {
-    id: '5',
-    patientName: 'علي كريم',
-    patientPhone: '+964 750 567 8901',
-    doctorName: 'د. محمد علي',
-    service: 'خلع ضرس',
-    date: '2024-01-18',
-    time: '11:30',
-    duration: 30,
-    status: 'completed',
-  },
-  {
-    id: '6',
-    patientName: 'سارة محمد',
-    patientPhone: '+964 750 678 9012',
-    doctorName: 'د. سارة أحمد',
-    service: 'متابعة',
-    date: '2024-01-17',
-    time: '14:00',
-    duration: 30,
-    status: 'no_show',
-  },
-];
+import {
+  useAppointments,
+  useAppointmentTodayStats,
+  type AppointmentStatus,
+} from '@/hooks/use-appointments';
+import { useDebouncedValue } from '@/hooks/use-debounced-value';
 
 const statusConfig = {
-  new: { variant: 'secondary' as const, label: 'status.new' },
-  confirmed: { variant: 'success' as const, label: 'status.confirmed' },
-  arrived: { variant: 'info' as const, label: 'status.arrived' },
-  in_progress: { variant: 'warning' as const, label: 'status.inProgress' },
-  completed: { variant: 'success' as const, label: 'status.completed' },
-  no_show: { variant: 'destructive' as const, label: 'status.noShow' },
-  cancelled: { variant: 'destructive' as const, label: 'status.cancelled' },
+  NEW: { variant: 'secondary' as const, label: 'status.new' },
+  CONFIRMED: { variant: 'success' as const, label: 'status.confirmed' },
+  ARRIVED: { variant: 'info' as const, label: 'status.arrived' },
+  IN_PROGRESS: { variant: 'warning' as const, label: 'status.inProgress' },
+  COMPLETED: { variant: 'success' as const, label: 'status.completed' },
+  NO_SHOW: { variant: 'destructive' as const, label: 'status.noShow' },
+  CANCELLED: { variant: 'destructive' as const, label: 'status.cancelled' },
 };
+
+const defaultConfig = { variant: 'secondary' as const, label: 'status.new' };
+
+function getDateString(offset: number = 0): string {
+  const date = new Date();
+  date.setDate(date.getDate() + offset);
+  return date.toISOString().split('T')[0] as string;
+}
 
 export default function AppointmentsPage() {
   const t = useTranslations();
@@ -142,31 +77,64 @@ export default function AppointmentsPage() {
   const [statusFilter, setStatusFilter] = React.useState<string>('all');
   const [dateFilter, setDateFilter] = React.useState<string>('today');
   const [viewMode, setViewMode] = React.useState<'list' | 'calendar'>('list');
+  const [selectedDate, setSelectedDate] = React.useState(getDateString());
 
-  const filteredAppointments = mockAppointments.filter((apt) => {
-    const matchesSearch =
-      apt.patientName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      apt.patientPhone.includes(searchQuery);
-    const matchesStatus = statusFilter === 'all' || apt.status === statusFilter;
-    const matchesDate =
-      dateFilter === 'all' ||
-      (dateFilter === 'today' && apt.date === '2024-01-18') ||
-      (dateFilter === 'yesterday' && apt.date === '2024-01-17') ||
-      (dateFilter === 'week' && true); // In real app, would check if within current week
-    return matchesSearch && matchesStatus && matchesDate;
+  const debouncedSearch = useDebouncedValue(searchQuery, 300);
+
+  const { data: todayStats, isLoading: isLoadingStats } = useAppointmentTodayStats();
+
+  const getDateParams = () => {
+    switch (dateFilter) {
+      case 'today':
+        return { date: getDateString() };
+      case 'yesterday':
+        return { date: getDateString(-1) };
+      case 'week':
+        return {
+          dateFrom: getDateString(-7),
+          dateTo: getDateString(),
+        };
+      default:
+        return {};
+    }
+  };
+
+  const { data, isLoading, isError, error } = useAppointments({
+    ...getDateParams(),
+    status: statusFilter !== 'all' ? (statusFilter.toUpperCase() as AppointmentStatus) : undefined,
   });
 
-  const todayStats = {
-    total: mockAppointments.filter((a) => a.date === '2024-01-18').length,
-    confirmed: mockAppointments.filter(
-      (a) => a.date === '2024-01-18' && a.status === 'confirmed'
-    ).length,
-    completed: mockAppointments.filter(
-      (a) => a.date === '2024-01-18' && a.status === 'completed'
-    ).length,
-    waiting: mockAppointments.filter(
-      (a) => a.date === '2024-01-18' && a.status === 'arrived'
-    ).length,
+  const appointments = data?.data ?? [];
+
+  // Filter by search on client side
+  const filteredAppointments = appointments.filter((apt) => {
+    if (!debouncedSearch) return true;
+    const search = debouncedSearch.toLowerCase();
+    return (
+      apt.patient?.name?.toLowerCase().includes(search) ||
+      apt.patient?.phone?.includes(search)
+    );
+  });
+
+  const formatDate = (dateStr: string) => {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('ar-IQ', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    });
+  };
+
+  const goToPreviousDay = () => {
+    const date = new Date(selectedDate);
+    date.setDate(date.getDate() - 1);
+    setSelectedDate(date.toISOString().split('T')[0] as string);
+  };
+
+  const goToNextDay = () => {
+    const date = new Date(selectedDate);
+    date.setDate(date.getDate() + 1);
+    setSelectedDate(date.toISOString().split('T')[0] as string);
   };
 
   return (
@@ -178,7 +146,11 @@ export default function AppointmentsPage() {
             {t('appointments.title')}
           </h1>
           <p className="text-muted-foreground">
-            {t('appointments.todayAppointments')}: {todayStats.total}
+            {isLoadingStats ? (
+              <Skeleton className="h-4 w-32 inline-block" />
+            ) : (
+              `${t('appointments.todayAppointments')}: ${todayStats?.total ?? 0}`
+            )}
           </p>
         </div>
         <Button asChild>
@@ -198,7 +170,11 @@ export default function AppointmentsPage() {
                 <Calendar className="h-5 w-5 text-blue-600 dark:text-blue-400" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{todayStats.total}</p>
+                {isLoadingStats ? (
+                  <Skeleton className="h-8 w-12" />
+                ) : (
+                  <p className="text-2xl font-bold">{todayStats?.total ?? 0}</p>
+                )}
                 <p className="text-sm text-muted-foreground">{t('dashboard.todayAppointments')}</p>
               </div>
             </div>
@@ -211,7 +187,11 @@ export default function AppointmentsPage() {
                 <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{todayStats.completed}</p>
+                {isLoadingStats ? (
+                  <Skeleton className="h-8 w-12" />
+                ) : (
+                  <p className="text-2xl font-bold">{todayStats?.completed ?? 0}</p>
+                )}
                 <p className="text-sm text-muted-foreground">{t('dashboard.completed')}</p>
               </div>
             </div>
@@ -224,7 +204,11 @@ export default function AppointmentsPage() {
                 <Clock className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{todayStats.waiting}</p>
+                {isLoadingStats ? (
+                  <Skeleton className="h-8 w-12" />
+                ) : (
+                  <p className="text-2xl font-bold">{todayStats?.waiting ?? 0}</p>
+                )}
                 <p className="text-sm text-muted-foreground">{t('dashboard.waiting')}</p>
               </div>
             </div>
@@ -237,7 +221,11 @@ export default function AppointmentsPage() {
                 <CheckCircle className="h-5 w-5 text-purple-600 dark:text-purple-400" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{todayStats.confirmed}</p>
+                {isLoadingStats ? (
+                  <Skeleton className="h-8 w-12" />
+                ) : (
+                  <p className="text-2xl font-bold">{todayStats?.confirmed ?? 0}</p>
+                )}
                 <p className="text-sm text-muted-foreground">{t('appointments.status.confirmed')}</p>
               </div>
             </div>
@@ -302,6 +290,20 @@ export default function AppointmentsPage() {
         </CardContent>
       </Card>
 
+      {/* Error State */}
+      {isError && (
+        <Card className="border-destructive">
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-2 text-destructive">
+              <AlertCircle className="h-5 w-5" />
+              <span>
+                {(error as any)?.message || t('common.errorLoading') || 'Error loading data'}
+              </span>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Appointments List */}
       {viewMode === 'list' ? (
         <Card>
@@ -309,102 +311,122 @@ export default function AppointmentsPage() {
             <div className="flex items-center justify-between">
               <CardTitle>{t('appointments.title')}</CardTitle>
               <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm">
+                <Button variant="outline" size="sm" onClick={goToNextDay}>
                   <ChevronRight className="h-4 w-4 rtl:rotate-180" />
                 </Button>
-                <span className="text-sm">18 يناير 2024</span>
-                <Button variant="outline" size="sm">
+                <span className="text-sm">{formatDate(selectedDate)}</span>
+                <Button variant="outline" size="sm" onClick={goToPreviousDay}>
                   <ChevronLeft className="h-4 w-4 rtl:rotate-180" />
                 </Button>
               </div>
             </div>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>{t('common.time')}</TableHead>
-                  <TableHead>{t('patients.patientName')}</TableHead>
-                  <TableHead>{t('appointments.selectDoctor')}</TableHead>
-                  <TableHead>{t('appointments.selectService')}</TableHead>
-                  <TableHead>{t('appointments.duration')}</TableHead>
-                  <TableHead>{t('common.status')}</TableHead>
-                  <TableHead className="w-[70px]">{t('common.actions')}</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredAppointments.map((apt) => {
-                  const config = statusConfig[apt.status];
-                  return (
-                    <TableRow key={apt.id}>
-                      <TableCell className="font-medium">{apt.time}</TableCell>
-                      <TableCell>
-                        <div>
-                          <p className="font-medium">{apt.patientName}</p>
-                          <p className="text-sm text-muted-foreground" dir="ltr">
-                            {apt.patientPhone}
-                          </p>
-                        </div>
-                      </TableCell>
-                      <TableCell>{apt.doctorName}</TableCell>
-                      <TableCell>{apt.service}</TableCell>
-                      <TableCell>
-                        {apt.duration} {t('appointments.minutes')}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={config.variant}>
-                          {t(`appointments.${config.label}`)}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon">
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem asChild>
-                              <Link href={`/appointments/${apt.id}`}>
-                                <Eye className="me-2 h-4 w-4" />
-                                {t('common.view') || 'View'}
-                              </Link>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem asChild>
-                              <Link href={`/appointments/${apt.id}/edit`}>
-                                <Edit className="me-2 h-4 w-4" />
-                                {t('common.edit')}
-                              </Link>
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            {apt.status === 'confirmed' && (
-                              <DropdownMenuItem>
-                                <CheckCircle className="me-2 h-4 w-4" />
-                                {t('appointments.confirmArrival')}
+            {isLoading ? (
+              <div className="space-y-4">
+                {[...Array(5)].map((_, i) => (
+                  <div key={i} className="flex items-center gap-4">
+                    <Skeleton className="h-12 w-16" />
+                    <Skeleton className="h-12 flex-1" />
+                    <Skeleton className="h-12 w-24" />
+                    <Skeleton className="h-12 w-24" />
+                    <Skeleton className="h-12 w-16" />
+                    <Skeleton className="h-12 w-20" />
+                    <Skeleton className="h-12 w-10" />
+                  </div>
+                ))}
+              </div>
+            ) : filteredAppointments.length === 0 ? (
+              <div className="text-center py-12 text-muted-foreground">
+                {t('appointments.noAppointments') || 'No appointments found'}
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>{t('common.time')}</TableHead>
+                    <TableHead>{t('patients.patientName')}</TableHead>
+                    <TableHead>{t('appointments.selectDoctor')}</TableHead>
+                    <TableHead>{t('appointments.selectService')}</TableHead>
+                    <TableHead>{t('appointments.duration')}</TableHead>
+                    <TableHead>{t('common.status')}</TableHead>
+                    <TableHead className="w-[70px]">{t('common.actions')}</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredAppointments.map((apt) => {
+                    const config = statusConfig[apt.status as keyof typeof statusConfig] ?? defaultConfig;
+                    return (
+                      <TableRow key={apt.id}>
+                        <TableCell className="font-medium">{apt.startTime}</TableCell>
+                        <TableCell>
+                          <div>
+                            <p className="font-medium">{apt.patient?.name}</p>
+                            <p className="text-sm text-muted-foreground" dir="ltr">
+                              {apt.patient?.phone}
+                            </p>
+                          </div>
+                        </TableCell>
+                        <TableCell>{apt.doctor?.name}</TableCell>
+                        <TableCell>{apt.service?.name || '-'}</TableCell>
+                        <TableCell>
+                          {apt.duration} {t('appointments.minutes')}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={config.variant}>
+                            {t(`appointments.${config.label}`)}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon">
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem asChild>
+                                <Link href={`/appointments/${apt.id}`}>
+                                  <Eye className="me-2 h-4 w-4" />
+                                  {t('common.view') || 'View'}
+                                </Link>
                               </DropdownMenuItem>
-                            )}
-                            {apt.status === 'arrived' && (
-                              <DropdownMenuItem>
-                                <Clock className="me-2 h-4 w-4" />
-                                {t('appointments.startVisit')}
+                              <DropdownMenuItem asChild>
+                                <Link href={`/appointments/${apt.id}/edit`}>
+                                  <Edit className="me-2 h-4 w-4" />
+                                  {t('common.edit')}
+                                </Link>
                               </DropdownMenuItem>
-                            )}
-                            <DropdownMenuItem>
-                              <Calendar className="me-2 h-4 w-4" />
-                              {t('appointments.reschedule')}
-                            </DropdownMenuItem>
-                            <DropdownMenuItem className="text-destructive">
-                              <XCircle className="me-2 h-4 w-4" />
-                              {t('appointments.cancelAppointment')}
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
+                              <DropdownMenuSeparator />
+                              {apt.status === 'CONFIRMED' && (
+                                <DropdownMenuItem>
+                                  <CheckCircle className="me-2 h-4 w-4" />
+                                  {t('appointments.confirmArrival')}
+                                </DropdownMenuItem>
+                              )}
+                              {apt.status === 'ARRIVED' && (
+                                <DropdownMenuItem>
+                                  <Clock className="me-2 h-4 w-4" />
+                                  {t('appointments.startVisit')}
+                                </DropdownMenuItem>
+                              )}
+                              <DropdownMenuItem>
+                                <Calendar className="me-2 h-4 w-4" />
+                                {t('appointments.reschedule')}
+                              </DropdownMenuItem>
+                              <DropdownMenuItem className="text-destructive">
+                                <XCircle className="me-2 h-4 w-4" />
+                                {t('appointments.cancelAppointment')}
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            )}
           </CardContent>
         </Card>
       ) : (

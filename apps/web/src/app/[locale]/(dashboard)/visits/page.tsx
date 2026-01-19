@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   Table,
   TableBody,
@@ -37,71 +38,16 @@ import {
   FileText,
   Stethoscope,
   Calendar,
+  AlertCircle,
 } from 'lucide-react';
+import { useVisits, useVisitTodayStats, type VisitStatus } from '@/hooks/use-visits';
+import { useDebouncedValue } from '@/hooks/use-debounced-value';
 
-interface Visit {
-  id: string;
-  patientName: string;
-  patientFileNumber: string;
-  doctorName: string;
-  date: string;
-  chiefComplaint: string;
-  diagnosis: string;
-  status: 'in_progress' | 'completed';
+function getDateString(offset: number = 0): string {
+  const date = new Date();
+  date.setDate(date.getDate() + offset);
+  return date.toISOString().split('T')[0] as string;
 }
-
-const mockVisits: Visit[] = [
-  {
-    id: '1',
-    patientName: 'أحمد محمد علي',
-    patientFileNumber: 'P-2024-001',
-    doctorName: 'د. سارة أحمد',
-    date: '2024-01-18',
-    chiefComplaint: 'ألم في الأسنان',
-    diagnosis: 'تسوس عميق',
-    status: 'completed',
-  },
-  {
-    id: '2',
-    patientName: 'فاطمة حسين',
-    patientFileNumber: 'P-2024-002',
-    doctorName: 'د. محمد علي',
-    date: '2024-01-18',
-    chiefComplaint: 'فحص دوري',
-    diagnosis: 'سليم',
-    status: 'in_progress',
-  },
-  {
-    id: '3',
-    patientName: 'محمود سعيد',
-    patientFileNumber: 'P-2024-003',
-    doctorName: 'د. سارة أحمد',
-    date: '2024-01-17',
-    chiefComplaint: 'تنظيف أسنان',
-    diagnosis: 'تراكم جير',
-    status: 'completed',
-  },
-  {
-    id: '4',
-    patientName: 'نور الهدى',
-    patientFileNumber: 'P-2024-004',
-    doctorName: 'د. أحمد خالد',
-    date: '2024-01-17',
-    chiefComplaint: 'حشوة سقطت',
-    diagnosis: 'حشوة تحتاج استبدال',
-    status: 'completed',
-  },
-  {
-    id: '5',
-    patientName: 'علي كريم',
-    patientFileNumber: 'P-2024-005',
-    doctorName: 'د. محمد علي',
-    date: '2024-01-16',
-    chiefComplaint: 'ألم في اللثة',
-    diagnosis: 'التهاب لثة',
-    status: 'completed',
-  },
-];
 
 export default function VisitsPage() {
   const t = useTranslations();
@@ -109,21 +55,39 @@ export default function VisitsPage() {
   const [dateFilter, setDateFilter] = React.useState<string>('all');
   const [statusFilter, setStatusFilter] = React.useState<string>('all');
 
-  const filteredVisits = mockVisits.filter((visit) => {
-    const matchesSearch =
-      visit.patientName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      visit.patientFileNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      visit.doctorName.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || visit.status === statusFilter;
-    const matchesDate =
-      dateFilter === 'all' ||
-      (dateFilter === 'today' && visit.date === '2024-01-18') ||
-      (dateFilter === 'yesterday' && visit.date === '2024-01-17');
-    return matchesSearch && matchesStatus && matchesDate;
+  const debouncedSearch = useDebouncedValue(searchQuery, 300);
+
+  const { data: todayStats, isLoading: isLoadingStats } = useVisitTodayStats();
+
+  const getDateParams = () => {
+    switch (dateFilter) {
+      case 'today':
+        return { date: getDateString() };
+      case 'yesterday':
+        return { date: getDateString(-1) };
+      default:
+        return {};
+    }
+  };
+
+  const { data, isLoading, isError, error } = useVisits({
+    ...getDateParams(),
+    status: statusFilter !== 'all' ? (statusFilter.toUpperCase() as VisitStatus) : undefined,
   });
 
-  const todayCount = mockVisits.filter((v) => v.date === '2024-01-18').length;
-  const inProgressCount = mockVisits.filter((v) => v.status === 'in_progress').length;
+  const visits = data?.data ?? [];
+  const totalVisits = data?.meta?.total ?? 0;
+
+  // Filter by search on client side
+  const filteredVisits = visits.filter((visit) => {
+    if (!debouncedSearch) return true;
+    const search = debouncedSearch.toLowerCase();
+    return (
+      visit.patient?.name?.toLowerCase().includes(search) ||
+      visit.patient?.fileNumber?.toLowerCase().includes(search) ||
+      visit.doctor?.name?.toLowerCase().includes(search)
+    );
+  });
 
   return (
     <div className="space-y-6">
@@ -134,7 +98,13 @@ export default function VisitsPage() {
             {t('visits.title')}
           </h1>
           <p className="text-muted-foreground">
-            {t('visits.todayVisits')}: {todayCount} • {t('visits.inProgress')}: {inProgressCount}
+            {isLoadingStats ? (
+              <Skeleton className="h-4 w-48 inline-block" />
+            ) : (
+              <>
+                {t('visits.todayVisits')}: {todayStats?.total ?? 0} • {t('visits.inProgress')}: {todayStats?.inProgress ?? 0}
+              </>
+            )}
           </p>
         </div>
         <Button asChild>
@@ -154,7 +124,11 @@ export default function VisitsPage() {
                 <Stethoscope className="h-5 w-5 text-blue-600 dark:text-blue-400" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{todayCount}</p>
+                {isLoadingStats ? (
+                  <Skeleton className="h-8 w-12" />
+                ) : (
+                  <p className="text-2xl font-bold">{todayStats?.total ?? 0}</p>
+                )}
                 <p className="text-sm text-muted-foreground">{t('visits.todayVisits')}</p>
               </div>
             </div>
@@ -167,7 +141,11 @@ export default function VisitsPage() {
                 <Calendar className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{inProgressCount}</p>
+                {isLoadingStats ? (
+                  <Skeleton className="h-8 w-12" />
+                ) : (
+                  <p className="text-2xl font-bold">{todayStats?.inProgress ?? 0}</p>
+                )}
                 <p className="text-sm text-muted-foreground">{t('visits.inProgress')}</p>
               </div>
             </div>
@@ -180,7 +158,11 @@ export default function VisitsPage() {
                 <FileText className="h-5 w-5 text-green-600 dark:text-green-400" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{mockVisits.length}</p>
+                {isLoading ? (
+                  <Skeleton className="h-8 w-12" />
+                ) : (
+                  <p className="text-2xl font-bold">{totalVisits}</p>
+                )}
                 <p className="text-sm text-muted-foreground">{t('visits.totalVisits')}</p>
               </div>
             </div>
@@ -225,81 +207,115 @@ export default function VisitsPage() {
         </CardContent>
       </Card>
 
+      {/* Error State */}
+      {isError && (
+        <Card className="border-destructive">
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-2 text-destructive">
+              <AlertCircle className="h-5 w-5" />
+              <span>
+                {(error as any)?.message || t('common.errorLoading') || 'Error loading data'}
+              </span>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Visits Table */}
       <Card>
         <CardHeader>
           <CardTitle>{t('visits.title')}</CardTitle>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>{t('common.date')}</TableHead>
-                <TableHead>{t('patients.patientName')}</TableHead>
-                <TableHead>{t('appointments.selectDoctor')}</TableHead>
-                <TableHead>{t('visits.chiefComplaint')}</TableHead>
-                <TableHead>{t('visits.diagnosis')}</TableHead>
-                <TableHead>{t('common.status')}</TableHead>
-                <TableHead className="w-[70px]">{t('common.actions')}</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredVisits.map((visit) => (
-                <TableRow key={visit.id}>
-                  <TableCell>{visit.date}</TableCell>
-                  <TableCell>
-                    <div>
-                      <p className="font-medium">{visit.patientName}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {visit.patientFileNumber}
-                      </p>
-                    </div>
-                  </TableCell>
-                  <TableCell>{visit.doctorName}</TableCell>
-                  <TableCell>{visit.chiefComplaint}</TableCell>
-                  <TableCell>{visit.diagnosis}</TableCell>
-                  <TableCell>
-                    <Badge
-                      variant={visit.status === 'completed' ? 'success' : 'warning'}
-                    >
-                      {visit.status === 'completed'
-                        ? t('appointments.status.completed')
-                        : t('visits.inProgress')}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem asChild>
-                          <Link href={`/visits/${visit.id}`}>
-                            <Eye className="me-2 h-4 w-4" />
-                            {t('common.view') || 'View'}
-                          </Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem asChild>
-                          <Link href={`/visits/${visit.id}/edit`}>
-                            <Edit className="me-2 h-4 w-4" />
-                            {t('common.edit')}
-                          </Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem asChild>
-                          <Link href={`/visits/${visit.id}/prescription`}>
-                            <FileText className="me-2 h-4 w-4" />
-                            {t('visits.prescription')}
-                          </Link>
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
+          {isLoading ? (
+            <div className="space-y-4">
+              {[...Array(5)].map((_, i) => (
+                <div key={i} className="flex items-center gap-4">
+                  <Skeleton className="h-12 w-24" />
+                  <Skeleton className="h-12 flex-1" />
+                  <Skeleton className="h-12 w-24" />
+                  <Skeleton className="h-12 w-32" />
+                  <Skeleton className="h-12 w-32" />
+                  <Skeleton className="h-12 w-20" />
+                  <Skeleton className="h-12 w-10" />
+                </div>
               ))}
-            </TableBody>
-          </Table>
+            </div>
+          ) : filteredVisits.length === 0 ? (
+            <div className="text-center py-12 text-muted-foreground">
+              {t('visits.noVisits') || 'No visits found'}
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>{t('common.date')}</TableHead>
+                  <TableHead>{t('patients.patientName')}</TableHead>
+                  <TableHead>{t('appointments.selectDoctor')}</TableHead>
+                  <TableHead>{t('visits.chiefComplaint')}</TableHead>
+                  <TableHead>{t('visits.diagnosis')}</TableHead>
+                  <TableHead>{t('common.status')}</TableHead>
+                  <TableHead className="w-[70px]">{t('common.actions')}</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredVisits.map((visit) => (
+                  <TableRow key={visit.id}>
+                    <TableCell>{visit.date}</TableCell>
+                    <TableCell>
+                      <div>
+                        <p className="font-medium">{visit.patient?.name}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {visit.patient?.fileNumber}
+                        </p>
+                      </div>
+                    </TableCell>
+                    <TableCell>{visit.doctor?.name}</TableCell>
+                    <TableCell>{visit.chiefComplaint || '-'}</TableCell>
+                    <TableCell>{visit.diagnosis || '-'}</TableCell>
+                    <TableCell>
+                      <Badge
+                        variant={visit.status === 'COMPLETED' ? 'success' : 'warning'}
+                      >
+                        {visit.status === 'COMPLETED'
+                          ? t('appointments.status.completed')
+                          : t('visits.inProgress')}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem asChild>
+                            <Link href={`/visits/${visit.id}`}>
+                              <Eye className="me-2 h-4 w-4" />
+                              {t('common.view') || 'View'}
+                            </Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem asChild>
+                            <Link href={`/visits/${visit.id}/edit`}>
+                              <Edit className="me-2 h-4 w-4" />
+                              {t('common.edit')}
+                            </Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem asChild>
+                            <Link href={`/visits/${visit.id}/prescription`}>
+                              <FileText className="me-2 h-4 w-4" />
+                              {t('visits.prescription')}
+                            </Link>
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
         </CardContent>
       </Card>
     </div>
