@@ -2,7 +2,8 @@ import {
   Injectable,
   UnauthorizedException,
   BadRequestException,
-  ForbiddenException,
+  HttpException,
+  HttpStatus,
 } from '@nestjs/common';
 import { Role } from '@prisma/client';
 import { ConfigService } from '@nestjs/config';
@@ -89,11 +90,15 @@ export class AuthService {
         },
       );
 
-      throw new ForbiddenException({
-        code: '2FA_SETUP_REQUIRED',
-        message: 'Two-factor authentication must be enabled for your role.',
-        setupToken,
-      });
+      throw new HttpException(
+        {
+          statusCode: HttpStatus.FORBIDDEN,
+          code: '2FA_SETUP_REQUIRED',
+          message: 'Two-factor authentication must be enabled for your role.',
+          setupToken,
+        },
+        HttpStatus.FORBIDDEN,
+      );
     }
 
     // Check if 2FA is enabled
