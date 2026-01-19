@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { Button, buttonVariants } from './button';
@@ -29,7 +29,7 @@ describe('Button', () => {
       render(<Button ref={ref}>Button</Button>);
 
       expect(ref).toHaveBeenCalled();
-      expect(ref.mock.calls[0][0]).toBeInstanceOf(HTMLButtonElement);
+      expect(ref.mock.calls[0]?.[0]).toBeInstanceOf(HTMLButtonElement);
     });
   });
 
