@@ -130,6 +130,33 @@ export class SequencesService {
   }
 
   /**
+   * Generates a unique purchase order number.
+   * Format: PO-YYYYMM-XXXXX (e.g., PO-202601-00001)
+   * Sequence resets each month.
+   */
+  async generatePurchaseOrderNumber(tenantId: string): Promise<string> {
+    const date = new Date();
+    const year = date.getFullYear();
+    const month = date.getMonth() + 1;
+
+    // Get next sequence value for this tenant and month
+    const sequence = await this.getNextValue(
+      tenantId,
+      SequenceType.PURCHASE_ORDER_NUMBER,
+      year,
+      month,
+    );
+
+    // Format year-month
+    const yearMonthStr = year.toString() + month.toString().padStart(2, '0');
+
+    // Format sequence with leading zeros
+    const sequenceStr = sequence.toString().padStart(5, '0');
+
+    return `PO-${yearMonthStr}-${sequenceStr}`;
+  }
+
+  /**
    * Gets the current value of a sequence without incrementing it.
    * Useful for checking sequence state.
    */

@@ -37,6 +37,18 @@ model Tenant {
   sequences               TenantSequence[]
   notifications           Notification[]
   notificationPreferences NotificationPreference[]
+  // Milestone 9 Relations
+  inventoryCategories     InventoryCategory[]
+  inventoryItems          InventoryItem[]
+  inventoryMovements      InventoryMovement[]
+  suppliers               Supplier[]
+  purchaseOrders          PurchaseOrder[]
+  scheduleTemplates       ScheduleTemplate[]
+  workSchedules           WorkSchedule[]
+  timeOffRequests         TimeOffRequest[]
+  integrationConfigs      IntegrationConfig[]
+  integrationLogs         IntegrationLog[]
+  pushSubscriptions       PushSubscription[]
 
   @@map("tenants")
 }
@@ -55,13 +67,15 @@ model Branch {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   // Relations
-  tenant       Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  patients     Patient[]
-  appointments Appointment[]
-  visits       Visit[]
-  invoices     Invoice[]
-  expenses     Expense[]
-  auditEvents  AuditEvent[]
+  tenant        Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  patients      Patient[]
+  appointments  Appointment[]
+  visits        Visit[]
+  invoices      Invoice[]
+  expenses      Expense[]
+  auditEvents   AuditEvent[]
+  // Milestone 9 Relations
+  workSchedules WorkSchedule[]
 
   @@map("branches")
 }
@@ -70,16 +84,16 @@ model Branch {
 // Authentication: User
 // ===========================================
 model User {
-  id               String    @id @default(cuid())
-  tenantId         String    @map("tenant_id")
-  email            String    @unique
+  id               String     @id @default(cuid())
+  tenantId         String     @map("tenant_id")
+  email            String     @unique
   phone            String?
   name             String
-  passwordHash     String    @map("password_hash")
-  role             Role      @default(RECEPTION)
-  branchIds        String[]  @map("branch_ids")
-  twoFactorEnabled Boolean   @default(false) @map("two_factor_enabled")
-  twoFactorSecret  String?   @map("two_factor_secret")
+  passwordHash     String     @map("password_hash")
+  role             Role       @default(RECEPTION)
+  branchIds        String[]   @map("branch_ids")
+  twoFactorEnabled Boolean    @default(false) @map("two_factor_enabled")
+  twoFactorSecret  String?    @map("two_factor_secret")
   status           UserStatus @default(ACTIVE)
   language         Language   @default(ar)
   lastLoginAt      DateTime?  @map("last_login_at")
@@ -87,20 +101,30 @@ model User {
   updatedAt        DateTime   @updatedAt @map("updated_at")
 
   // Relations
-  tenant                  Tenant                  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  visits                  Visit[]                 @relation("DoctorVisits")
-  appointments            Appointment[]           @relation("DoctorAppointments")
-  assignedConversations   Conversation[]          @relation("AssignedConversations")
-  assignedTasks           Task[]                  @relation("AssignedTasks")
-  createdTasks            Task[]                  @relation("CreatedTasks")
-  payments                Payment[]
-  expenses                Expense[]
-  attachments             Attachment[]
-  activityEvents          ActivityEvent[]         @relation("ActorEvents")
-  auditEvents             AuditEvent[]            @relation("UserAuditEvents")
-  messages                Message[]
-  notifications           Notification[]
-  notificationPreference  NotificationPreference?
+  tenant                 Tenant                  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  visits                 Visit[]                 @relation("DoctorVisits")
+  appointments           Appointment[]           @relation("DoctorAppointments")
+  assignedConversations  Conversation[]          @relation("AssignedConversations")
+  assignedTasks          Task[]                  @relation("AssignedTasks")
+  createdTasks           Task[]                  @relation("CreatedTasks")
+  payments               Payment[]
+  expenses               Expense[]
+  attachments            Attachment[]
+  activityEvents         ActivityEvent[]         @relation("ActorEvents")
+  auditEvents            AuditEvent[]            @relation("UserAuditEvents")
+  messages               Message[]
+  notifications          Notification[]
+  notificationPreference NotificationPreference?
+  // Milestone 9 Relations
+  inventoryMovements     InventoryMovement[]     @relation("InventoryMovements")
+  purchaseOrdersApproved PurchaseOrder[]         @relation("PurchaseOrderApprover")
+  purchaseOrdersReceived PurchaseOrder[]         @relation("PurchaseOrderReceiver")
+  purchaseOrdersCreated  PurchaseOrder[]         @relation("PurchaseOrderCreator")
+  workSchedules          WorkSchedule[]          @relation("UserWorkSchedules")
+  timeOffRequests        TimeOffRequest[]        @relation("UserTimeOffRequests")
+  timeOffReviews         TimeOffRequest[]        @relation("TimeOffReviewer")
+  integrationLogs        IntegrationLog[]        @relation("IntegrationLogTriggeredBy")
+  pushSubscriptions      PushSubscription[]      @relation("UserPushSubscriptions")
 
   @@map("users")
 }
@@ -227,11 +251,11 @@ model Appointment {
   updatedAt        DateTime          @updatedAt @map("updated_at")
 
   // Relations
-  tenant   Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  branch   Branch   @relation(fields: [branchId], references: [id])
-  patient  Patient  @relation(fields: [patientId], references: [id])
-  doctor   User     @relation("DoctorAppointments", fields: [doctorId], references: [id])
-  service  Service  @relation(fields: [serviceId], references: [id])
+  tenant   Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  branch   Branch    @relation(fields: [branchId], references: [id])
+  patient  Patient   @relation(fields: [patientId], references: [id])
+  doctor   User      @relation("DoctorAppointments", fields: [doctorId], references: [id])
+  service  Service   @relation(fields: [serviceId], references: [id])
   visit    Visit?
   invoices Invoice[]
 
@@ -507,20 +531,20 @@ enum MessageDirection {
 // Task
 // ===========================================
 model Task {
-  id             String         @id @default(cuid())
-  tenantId       String         @map("tenant_id")
-  entityType     TaskEntityType @map("entity_type")
-  entityId       String         @map("entity_id")
-  assignedTo     String         @map("assigned_to")
-  title          String
-  description    String?
-  dueDate        DateTime       @map("due_date")
-  priority       TaskPriority   @default(MEDIUM)
-  status         TaskStatus     @default(PENDING)
-  completedAt    DateTime?      @map("completed_at")
-  createdBy      String         @map("created_by")
-  createdAt      DateTime       @default(now()) @map("created_at")
-  updatedAt      DateTime       @updatedAt @map("updated_at")
+  id          String         @id @default(cuid())
+  tenantId    String         @map("tenant_id")
+  entityType  TaskEntityType @map("entity_type")
+  entityId    String         @map("entity_id")
+  assignedTo  String         @map("assigned_to")
+  title       String
+  description String?
+  dueDate     DateTime       @map("due_date")
+  priority    TaskPriority   @default(MEDIUM)
+  status      TaskStatus     @default(PENDING)
+  completedAt DateTime?      @map("completed_at")
+  createdBy   String         @map("created_by")
+  createdAt   DateTime       @default(now()) @map("created_at")
+  updatedAt   DateTime       @updatedAt @map("updated_at")
 
   // Relations
   assignee User @relation("AssignedTasks", fields: [assignedTo], references: [id])
@@ -660,6 +684,7 @@ model TenantSequence {
 enum SequenceType {
   PATIENT_FILE_NUMBER
   INVOICE_NUMBER
+  PURCHASE_ORDER_NUMBER
 }
 
 // ===========================================
@@ -699,30 +724,480 @@ enum NotificationType {
   INVOICE_OVERDUE
   MESSAGE_RECEIVED
   SYSTEM
+  // Milestone 9: Inventory notifications
+  LOW_STOCK_ALERT
+  STOCK_EXPIRED
+  PURCHASE_ORDER_APPROVED
+  PURCHASE_ORDER_RECEIVED
+  // Milestone 9: Scheduling notifications
+  TIME_OFF_REQUESTED
+  TIME_OFF_APPROVED
+  TIME_OFF_REJECTED
+  SCHEDULE_CHANGED
 }
 
 // ===========================================
 // Notification Preference
 // ===========================================
 model NotificationPreference {
-  id                      String  @id @default(cuid())
-  tenantId                String  @map("tenant_id")
-  userId                  String  @unique @map("user_id")
-  appointmentCreated      Boolean @default(true) @map("appointment_created")
-  appointmentCancelled    Boolean @default(true) @map("appointment_cancelled")
-  appointmentRescheduled  Boolean @default(true) @map("appointment_rescheduled")
-  taskAssigned            Boolean @default(true) @map("task_assigned")
-  taskCompleted           Boolean @default(true) @map("task_completed")
-  leadStageChanged        Boolean @default(true) @map("lead_stage_changed")
-  invoicePaid             Boolean @default(true) @map("invoice_paid")
-  invoiceOverdue          Boolean @default(true) @map("invoice_overdue")
-  messageReceived         Boolean @default(true) @map("message_received")
-  systemNotifications     Boolean @default(true) @map("system_notifications")
-  createdAt               DateTime @default(now()) @map("created_at")
-  updatedAt               DateTime @updatedAt @map("updated_at")
+  id                     String   @id @default(cuid())
+  tenantId               String   @map("tenant_id")
+  userId                 String   @unique @map("user_id")
+  appointmentCreated     Boolean  @default(true) @map("appointment_created")
+  appointmentCancelled   Boolean  @default(true) @map("appointment_cancelled")
+  appointmentRescheduled Boolean  @default(true) @map("appointment_rescheduled")
+  taskAssigned           Boolean  @default(true) @map("task_assigned")
+  taskCompleted          Boolean  @default(true) @map("task_completed")
+  leadStageChanged       Boolean  @default(true) @map("lead_stage_changed")
+  invoicePaid            Boolean  @default(true) @map("invoice_paid")
+  invoiceOverdue         Boolean  @default(true) @map("invoice_overdue")
+  messageReceived        Boolean  @default(true) @map("message_received")
+  systemNotifications    Boolean  @default(true) @map("system_notifications")
+  // Milestone 9: Inventory notification preferences
+  lowStockAlert          Boolean  @default(true) @map("low_stock_alert")
+  stockExpired           Boolean  @default(true) @map("stock_expired")
+  purchaseOrderApproved  Boolean  @default(true) @map("purchase_order_approved")
+  purchaseOrderReceived  Boolean  @default(true) @map("purchase_order_received")
+  // Milestone 9: Scheduling notification preferences
+  timeOffRequested       Boolean  @default(true) @map("time_off_requested")
+  timeOffApproved        Boolean  @default(true) @map("time_off_approved")
+  timeOffRejected        Boolean  @default(true) @map("time_off_rejected")
+  scheduleChanged        Boolean  @default(true) @map("schedule_changed")
+  createdAt              DateTime @default(now()) @map("created_at")
+  updatedAt              DateTime @updatedAt @map("updated_at")
 
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("notification_preferences")
+}
+
+// ===========================================
+// MILESTONE 9: Inventory Management
+// ===========================================
+
+// Inventory Category - Hierarchical categories for inventory items
+model InventoryCategory {
+  id        String   @id @default(cuid())
+  tenantId  String   @map("tenant_id")
+  parentId  String?  @map("parent_id")
+  name      String
+  nameAr    String?  @map("name_ar")
+  nameEn    String?  @map("name_en")
+  nameCkb   String?  @map("name_ckb")
+  nameKmr   String?  @map("name_kmr")
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  tenant   Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  parent   InventoryCategory?  @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  children InventoryCategory[] @relation("CategoryHierarchy")
+  items    InventoryItem[]
+
+  @@index([tenantId])
+  @@index([tenantId, parentId])
+  @@map("inventory_categories")
+}
+
+// Stock Unit types for inventory items
+enum StockUnit {
+  PIECES
+  BOXES
+  PACKS
+  BOTTLES
+  TUBES
+  VIALS
+  SYRINGES
+  PAIRS
+  SETS
+  LITERS
+  MILLILITERS
+  KILOGRAMS
+  GRAMS
+  METERS
+  OTHER
+}
+
+// Inventory Item - Stock items with quantities and reorder points
+model InventoryItem {
+  id              String    @id @default(cuid())
+  tenantId        String    @map("tenant_id")
+  categoryId      String?   @map("category_id")
+  supplierId      String?   @map("supplier_id")
+  sku             String
+  barcode         String?
+  name            String
+  nameAr          String?   @map("name_ar")
+  nameEn          String?   @map("name_en")
+  nameCkb         String?   @map("name_ckb")
+  nameKmr         String?   @map("name_kmr")
+  description     String?
+  unit            StockUnit @default(PIECES)
+  quantityInStock Int       @default(0) @map("quantity_in_stock")
+  reorderPoint    Int       @default(10) @map("reorder_point")
+  reorderQuantity Int       @default(50) @map("reorder_quantity")
+  costPrice       Decimal?  @map("cost_price") @db.Decimal(10, 2)
+  sellingPrice    Decimal?  @map("selling_price") @db.Decimal(10, 2)
+  expiryDate      DateTime? @map("expiry_date")
+  location        String?
+  active          Boolean   @default(true)
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  tenant             Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  category           InventoryCategory?  @relation(fields: [categoryId], references: [id])
+  supplier           Supplier?           @relation(fields: [supplierId], references: [id])
+  movements          InventoryMovement[]
+  purchaseOrderItems PurchaseOrderItem[]
+
+  @@unique([tenantId, sku])
+  @@index([tenantId, categoryId])
+  @@index([tenantId, supplierId])
+  @@index([tenantId, quantityInStock])
+  @@map("inventory_items")
+}
+
+// Movement types for inventory audit trail
+enum MovementType {
+  PURCHASE // Stock received from purchase order
+  SALE // Stock sold/used
+  ADJUSTMENT_IN // Manual increase
+  ADJUSTMENT_OUT // Manual decrease
+  TRANSFER_IN // Transfer from another location
+  TRANSFER_OUT // Transfer to another location
+  RETURN // Returned items
+  EXPIRED // Expired items removed
+  DAMAGED // Damaged items removed
+  INITIAL // Initial stock count
+}
+
+// Inventory Movement - Audit trail for all stock changes
+model InventoryMovement {
+  id             String       @id @default(cuid())
+  tenantId       String       @map("tenant_id")
+  itemId         String       @map("item_id")
+  type           MovementType
+  quantity       Int
+  quantityBefore Int          @map("quantity_before")
+  quantityAfter  Int          @map("quantity_after")
+  unitCost       Decimal?     @map("unit_cost") @db.Decimal(10, 2)
+  reference      String?
+  referenceId    String?      @map("reference_id")
+  notes          String?
+  performedBy    String       @map("performed_by")
+  createdAt      DateTime     @default(now()) @map("created_at")
+
+  tenant Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  item   InventoryItem @relation(fields: [itemId], references: [id])
+  user   User          @relation("InventoryMovements", fields: [performedBy], references: [id])
+
+  @@index([tenantId, itemId])
+  @@index([tenantId, createdAt])
+  @@index([tenantId, type])
+  @@map("inventory_movements")
+}
+
+// Supplier - Supplier contact and information
+model Supplier {
+  id            String   @id @default(cuid())
+  tenantId      String   @map("tenant_id")
+  name          String
+  contactPerson String?  @map("contact_person")
+  email         String?
+  phone         String?
+  address       String?
+  taxNumber     String?  @map("tax_number")
+  paymentTerms  String?  @map("payment_terms")
+  notes         String?
+  active        Boolean  @default(true)
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  tenant         Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  items          InventoryItem[]
+  purchaseOrders PurchaseOrder[]
+
+  @@index([tenantId])
+  @@map("suppliers")
+}
+
+// Purchase Order Status
+enum PurchaseOrderStatus {
+  DRAFT
+  PENDING_APPROVAL
+  APPROVED
+  ORDERED
+  PARTIALLY_RECEIVED
+  RECEIVED
+  CANCELLED
+}
+
+// Purchase Order - Purchase orders with approval workflow
+model PurchaseOrder {
+  id           String              @id @default(cuid())
+  tenantId     String              @map("tenant_id")
+  supplierId   String              @map("supplier_id")
+  orderNumber  String              @map("order_number")
+  status       PurchaseOrderStatus @default(DRAFT)
+  orderDate    DateTime            @map("order_date")
+  expectedDate DateTime?           @map("expected_date")
+  subtotal     Decimal             @db.Decimal(10, 2)
+  tax          Decimal?            @db.Decimal(10, 2)
+  shipping     Decimal?            @db.Decimal(10, 2)
+  total        Decimal             @db.Decimal(10, 2)
+  notes        String?
+  approvedBy   String?             @map("approved_by")
+  approvedAt   DateTime?           @map("approved_at")
+  receivedBy   String?             @map("received_by")
+  receivedAt   DateTime?           @map("received_at")
+  createdBy    String              @map("created_by")
+  createdAt    DateTime            @default(now()) @map("created_at")
+  updatedAt    DateTime            @updatedAt @map("updated_at")
+
+  tenant   Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  supplier Supplier            @relation(fields: [supplierId], references: [id])
+  items    PurchaseOrderItem[]
+  approver User?               @relation("PurchaseOrderApprover", fields: [approvedBy], references: [id])
+  receiver User?               @relation("PurchaseOrderReceiver", fields: [receivedBy], references: [id])
+  creator  User                @relation("PurchaseOrderCreator", fields: [createdBy], references: [id])
+
+  @@unique([tenantId, orderNumber])
+  @@index([tenantId, status])
+  @@index([tenantId, supplierId])
+  @@index([tenantId, createdAt])
+  @@map("purchase_orders")
+}
+
+// Purchase Order Item - Line items for purchase orders
+model PurchaseOrderItem {
+  id               String  @id @default(cuid())
+  purchaseOrderId  String  @map("purchase_order_id")
+  itemId           String  @map("item_id")
+  quantity         Int
+  receivedQuantity Int     @default(0) @map("received_quantity")
+  unitCost         Decimal @map("unit_cost") @db.Decimal(10, 2)
+  total            Decimal @db.Decimal(10, 2)
+
+  purchaseOrder PurchaseOrder @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
+  item          InventoryItem @relation(fields: [itemId], references: [id])
+
+  @@map("purchase_order_items")
+}
+
+// ===========================================
+// MILESTONE 9: Staff Scheduling
+// ===========================================
+
+// Schedule Template - Reusable schedule patterns
+model ScheduleTemplate {
+  id          String   @id @default(cuid())
+  tenantId    String   @map("tenant_id")
+  name        String
+  description String?
+  isDefault   Boolean  @default(false) @map("is_default")
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  tenant Tenant                 @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  slots  ScheduleTemplateSlot[]
+
+  @@index([tenantId])
+  @@map("schedule_templates")
+}
+
+// Schedule Template Slot - Time slots within templates
+model ScheduleTemplateSlot {
+  id         String  @id @default(cuid())
+  templateId String  @map("template_id")
+  dayOfWeek  Int     @map("day_of_week") // 0=Sunday, 6=Saturday
+  startTime  String  @map("start_time") // HH:mm format
+  endTime    String  @map("end_time") // HH:mm format
+  breakStart String? @map("break_start")
+  breakEnd   String? @map("break_end")
+
+  template ScheduleTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+
+  @@index([templateId, dayOfWeek])
+  @@map("schedule_template_slots")
+}
+
+// Work Schedule - Actual daily schedules per user/branch
+model WorkSchedule {
+  id         String   @id @default(cuid())
+  tenantId   String   @map("tenant_id")
+  userId     String   @map("user_id")
+  branchId   String   @map("branch_id")
+  date       DateTime @db.Date
+  startTime  String   @map("start_time") // HH:mm format
+  endTime    String   @map("end_time") // HH:mm format
+  breakStart String?  @map("break_start")
+  breakEnd   String?  @map("break_end")
+  notes      String?
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user   User   @relation("UserWorkSchedules", fields: [userId], references: [id])
+  branch Branch @relation(fields: [branchId], references: [id])
+
+  @@unique([tenantId, userId, branchId, date])
+  @@index([tenantId, userId, date])
+  @@index([tenantId, branchId, date])
+  @@map("work_schedules")
+}
+
+// Time Off types
+enum TimeOffType {
+  VACATION
+  SICK_LEAVE
+  PERSONAL
+  MATERNITY
+  PATERNITY
+  BEREAVEMENT
+  UNPAID
+  OTHER
+}
+
+// Time Off Status
+enum TimeOffStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
+// Time Off Request - Vacation/sick leave requests with approval
+model TimeOffRequest {
+  id          String        @id @default(cuid())
+  tenantId    String        @map("tenant_id")
+  userId      String        @map("user_id")
+  type        TimeOffType
+  startDate   DateTime      @map("start_date") @db.Date
+  endDate     DateTime      @map("end_date") @db.Date
+  reason      String?
+  status      TimeOffStatus @default(PENDING)
+  reviewedBy  String?       @map("reviewed_by")
+  reviewedAt  DateTime?     @map("reviewed_at")
+  reviewNotes String?       @map("review_notes")
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
+
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user     User   @relation("UserTimeOffRequests", fields: [userId], references: [id])
+  reviewer User?  @relation("TimeOffReviewer", fields: [reviewedBy], references: [id])
+
+  @@index([tenantId, userId])
+  @@index([tenantId, status])
+  @@index([tenantId, startDate, endDate])
+  @@map("time_off_requests")
+}
+
+// ===========================================
+// MILESTONE 9: Integrations
+// ===========================================
+
+// Integration Provider types
+enum IntegrationProvider {
+  // SMS Providers
+  TWILIO_SMS
+  // WhatsApp Providers
+  TWILIO_WHATSAPP
+  // Payment Providers
+  STRIPE
+  TAP_PAYMENTS
+  HYPERPAY
+}
+
+// Integration Type
+enum IntegrationType {
+  SMS
+  WHATSAPP
+  PAYMENT
+}
+
+// Integration Config - Provider credentials & settings (encrypted)
+model IntegrationConfig {
+  id              String              @id @default(cuid())
+  tenantId        String              @map("tenant_id")
+  provider        IntegrationProvider
+  type            IntegrationType
+  displayName     String              @map("display_name")
+  credentials     String // Encrypted JSON
+  settings        Json?
+  isActive        Boolean             @default(false) @map("is_active")
+  isDefault       Boolean             @default(false) @map("is_default")
+  lastTestedAt    DateTime?           @map("last_tested_at")
+  lastTestSuccess Boolean?            @map("last_test_success")
+  createdAt       DateTime            @default(now()) @map("created_at")
+  updatedAt       DateTime            @updatedAt @map("updated_at")
+
+  tenant Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  logs   IntegrationLog[]
+
+  @@unique([tenantId, provider])
+  @@index([tenantId, type])
+  @@index([tenantId, isActive])
+  @@map("integration_configs")
+}
+
+// Integration Log Status
+enum IntegrationLogStatus {
+  SUCCESS
+  FAILED
+  PENDING
+}
+
+// Integration Log - Activity log for all integration actions
+model IntegrationLog {
+  id           String               @id @default(cuid())
+  tenantId     String               @map("tenant_id")
+  configId     String               @map("config_id")
+  action       String // e.g., "send_sms", "process_payment"
+  status       IntegrationLogStatus
+  request      Json?
+  response     Json?
+  errorMessage String?              @map("error_message")
+  durationMs   Int?                 @map("duration_ms")
+  entityType   String?              @map("entity_type")
+  entityId     String?              @map("entity_id")
+  triggeredBy  String?              @map("triggered_by")
+  createdAt    DateTime             @default(now()) @map("created_at")
+
+  tenant Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  config IntegrationConfig @relation(fields: [configId], references: [id])
+  user   User?             @relation("IntegrationLogTriggeredBy", fields: [triggeredBy], references: [id])
+
+  @@index([tenantId, configId])
+  @@index([tenantId, createdAt])
+  @@index([tenantId, status])
+  @@map("integration_logs")
+}
+
+// ===========================================
+// MILESTONE 9: PWA / Push Notifications
+// ===========================================
+
+// Push Subscription - Web push subscription data
+model PushSubscription {
+  id         String    @id @default(cuid())
+  tenantId   String    @map("tenant_id")
+  userId     String    @map("user_id")
+  endpoint   String
+  p256dh     String // Public key for encryption
+  auth       String // Auth secret
+  userAgent  String?   @map("user_agent")
+  isActive   Boolean   @default(true) @map("is_active")
+  lastUsedAt DateTime? @map("last_used_at")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user   User   @relation("UserPushSubscriptions", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, endpoint])
+  @@index([tenantId, userId])
+  @@index([tenantId, isActive])
+  @@map("push_subscriptions")
 }

@@ -119,4 +119,14 @@ export const NOTIFICATION_TYPE_TO_PREFERENCE: Record<NotificationType, string> =
   INVOICE_OVERDUE: 'invoiceOverdue',
   MESSAGE_RECEIVED: 'messageReceived',
   SYSTEM: 'systemNotifications',
+  // Inventory notifications
+  LOW_STOCK_ALERT: 'systemNotifications',
+  STOCK_EXPIRED: 'systemNotifications',
+  PURCHASE_ORDER_APPROVED: 'systemNotifications',
+  PURCHASE_ORDER_RECEIVED: 'systemNotifications',
+  // Scheduling notifications
+  TIME_OFF_REQUESTED: 'systemNotifications',
+  TIME_OFF_APPROVED: 'systemNotifications',
+  TIME_OFF_REJECTED: 'systemNotifications',
+  SCHEDULE_CHANGED: 'systemNotifications',
 };

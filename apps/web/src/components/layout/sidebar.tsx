@@ -22,6 +22,8 @@ import {
   Building2,
   Bot,
   BarChart3,
+  Package,
+  CalendarClock,
 } from 'lucide-react';
 
 interface NavItem {
@@ -36,6 +38,8 @@ const navItems: NavItem[] = [
   { title: 'navigation.patients', href: '/patients', icon: Users },
   { title: 'navigation.appointments', href: '/appointments', icon: Calendar },
   { title: 'navigation.visits', href: '/visits', icon: Stethoscope, roles: ['ADMIN', 'MANAGER', 'DOCTOR', 'NURSE'] },
+  { title: 'navigation.inventory', href: '/inventory', icon: Package, roles: ['ADMIN', 'MANAGER', 'NURSE'] },
+  { title: 'navigation.scheduling', href: '/scheduling', icon: CalendarClock, roles: ['ADMIN', 'MANAGER'] },
   { title: 'navigation.finance', href: '/finance', icon: Receipt, roles: ['ADMIN', 'MANAGER', 'ACCOUNTANT'] },
   { title: 'navigation.inbox', href: '/inbox', icon: MessageSquare },
   { title: 'navigation.crm', href: '/crm', icon: Target, roles: ['ADMIN', 'MANAGER', 'SUPPORT', 'RECEPTION'] },
