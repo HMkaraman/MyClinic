@@ -40,7 +40,17 @@
     "welcome": "مرحباً",
     "language": "اللغة",
     "viewAll": "عرض الكل",
-    "view": "عرض"
+    "view": "عرض",
+    "all": "الكل",
+    "active": "نشط",
+    "inactive": "غير نشط",
+    "showing": "عرض",
+    "of": "من",
+    "noResults": "لا توجد نتائج",
+    "call": "اتصال",
+    "errorLoading": "خطأ في تحميل البيانات",
+    "yearsOld": "سنة",
+    "attachments": "المرفقات"
   },
   "auth": {
     "login": "تسجيل الدخول",
@@ -91,7 +101,8 @@
     "completed": "مكتمل",
     "waiting": "بانتظار",
     "noShow": "لم يحضر",
-    "upcoming": "قادم"
+    "upcoming": "قادم",
+    "noAppointmentsToday": "لا توجد مواعيد مجدولة لليوم"
   },
   "navigation": {
     "dashboard": "لوحة التحكم",
@@ -130,7 +141,11 @@
     "currentMedications": "الأدوية الحالية",
     "bloodType": "فصيلة الدم",
     "source": "مصدر المريض",
-    "searchPlaceholder": "ابحث بالاسم أو رقم الهاتف أو رقم الملف..."
+    "searchPlaceholder": "ابحث بالاسم أو رقم الهاتف أو رقم الملف...",
+    "noPatients": "لا يوجد مرضى بعد",
+    "patientInfo": "معلومات المريض",
+    "age": "العمر",
+    "viewProfile": "عرض الملف"
   },
   "appointments": {
     "title": "المواعيد",
@@ -162,7 +177,12 @@
     "rescheduleReason": "سبب إعادة الجدولة",
     "todayAppointments": "مواعيد اليوم",
     "upcomingAppointments": "المواعيد القادمة",
-    "availableSlots": "المواعيد المتاحة"
+    "availableSlots": "المواعيد المتاحة",
+    "today": "اليوم",
+    "yesterday": "أمس",
+    "thisWeek": "هذا الأسبوع",
+    "noAppointments": "لا توجد مواعيد",
+    "scheduleFollowUp": "جدولة المتابعة"
   },
   "visits": {
     "title": "الزيارات",
@@ -176,7 +196,23 @@
     "frequency": "التكرار",
     "duration": "المدة",
     "attachments": "المرفقات",
-    "uploadFile": "رفع ملف"
+    "uploadFile": "رفع ملف",
+    "todayVisits": "زيارات اليوم",
+    "inProgress": "قيد التنفيذ",
+    "totalVisits": "إجمالي الزيارات",
+    "searchPlaceholder": "ابحث بالمريض أو الطبيب...",
+    "noVisits": "لا توجد زيارات",
+    "visitDetails": "تفاصيل الزيارة",
+    "visitInfo": "معلومات الزيارة",
+    "historyAndExamination": "السيرة والفحص",
+    "history": "السيرة المرضية",
+    "examination": "الفحص",
+    "diagnosisAndTreatment": "التشخيص والعلاج",
+    "treatmentPlan": "خطة العلاج",
+    "printPrescription": "طباعة الوصفة",
+    "instructions": "التعليمات",
+    "followUp": "المتابعة",
+    "prescription": "الوصفة الطبية"
   },
   "finance": {
     "invoices": "الفواتير",
@@ -227,7 +263,8 @@
     "dailyReport": "التقرير اليومي",
     "monthlyReport": "التقرير الشهري",
     "revenue": "الإيرادات",
-    "netIncome": "صافي الدخل"
+    "netIncome": "صافي الدخل",
+    "invoice": "الفاتورة"
   },
   "inbox": {
     "title": "صندوق الوارد",
@@ -286,16 +323,29 @@
   },
   "settings": {
     "title": "الإعدادات",
+    "description": "إدارة إعدادات حسابك وتفضيلاتك",
     "general": "عام",
+    "personal": "الإعدادات الشخصية",
     "profile": "الملف الشخصي",
+    "profileDescription": "إدارة معلوماتك الشخصية وتفضيلاتك",
     "security": "الأمان",
+    "securityDescription": "كلمة المرور والتحقق بخطوتين وإعدادات الأمان",
     "notifications": "الإشعارات",
+    "notificationsDescription": "تكوين تفضيلات الإشعارات والتنبيهات",
     "language": "اللغة",
+    "languageDescription": "تغيير لغتك المفضلة وإعدادات المنطقة",
     "changePassword": "تغيير كلمة المرور",
     "enable2FA": "تفعيل التحقق بخطوتين",
     "clinic": "إعدادات العيادة",
-    "branches": "الفروع",
+    "clinicInfo": "معلومات العيادة",
+    "clinicInfoDescription": "إدارة تفاصيل العيادة وساعات العمل والفروع",
+    "staff": "إدارة الموظفين",
+    "staffDescription": "إدارة حسابات الموظفين والأدوار والصلاحيات",
     "services": "الخدمات",
+    "servicesDescription": "تكوين الخدمات المتاحة والأسعار",
+    "billing": "الفوترة",
+    "billingDescription": "تكوين إعدادات الفوترة وطرق الدفع",
+    "branches": "الفروع",
     "workingHours": "ساعات العمل",
     "holidays": "العطلات"
   },

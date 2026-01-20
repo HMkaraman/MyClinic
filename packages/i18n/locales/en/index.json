@@ -40,7 +40,17 @@
     "welcome": "Welcome",
     "language": "Language",
     "viewAll": "View All",
-    "view": "View"
+    "view": "View",
+    "all": "All",
+    "active": "Active",
+    "inactive": "Inactive",
+    "showing": "Showing",
+    "of": "of",
+    "noResults": "No results found",
+    "call": "Call",
+    "errorLoading": "Error loading data",
+    "yearsOld": "years old",
+    "attachments": "Attachments"
   },
   "auth": {
     "login": "Login",
@@ -91,7 +101,8 @@
     "completed": "Completed",
     "waiting": "Waiting",
     "noShow": "No Show",
-    "upcoming": "Upcoming"
+    "upcoming": "Upcoming",
+    "noAppointmentsToday": "No appointments scheduled for today"
   },
   "navigation": {
     "dashboard": "Dashboard",
@@ -130,7 +141,11 @@
     "currentMedications": "Current Medications",
     "bloodType": "Blood Type",
     "source": "Patient Source",
-    "searchPlaceholder": "Search by name, phone or file number..."
+    "searchPlaceholder": "Search by name, phone or file number...",
+    "noPatients": "No patients yet",
+    "patientInfo": "Patient Information",
+    "age": "Age",
+    "viewProfile": "View Profile"
   },
   "appointments": {
     "title": "Appointments",
@@ -162,7 +177,12 @@
     "rescheduleReason": "Reschedule Reason",
     "todayAppointments": "Today's Appointments",
     "upcomingAppointments": "Upcoming Appointments",
-    "availableSlots": "Available Slots"
+    "availableSlots": "Available Slots",
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "thisWeek": "This Week",
+    "noAppointments": "No appointments found",
+    "scheduleFollowUp": "Schedule Follow-up"
   },
   "visits": {
     "title": "Visits",
@@ -176,7 +196,23 @@
     "frequency": "Frequency",
     "duration": "Duration",
     "attachments": "Attachments",
-    "uploadFile": "Upload File"
+    "uploadFile": "Upload File",
+    "todayVisits": "Today's Visits",
+    "inProgress": "In Progress",
+    "totalVisits": "Total Visits",
+    "searchPlaceholder": "Search by patient or doctor...",
+    "noVisits": "No visits found",
+    "visitDetails": "Visit Details",
+    "visitInfo": "Visit Information",
+    "historyAndExamination": "History & Examination",
+    "history": "History",
+    "examination": "Examination",
+    "diagnosisAndTreatment": "Diagnosis & Treatment",
+    "treatmentPlan": "Treatment Plan",
+    "printPrescription": "Print Prescription",
+    "instructions": "Instructions",
+    "followUp": "Follow Up",
+    "prescription": "Prescription"
   },
   "finance": {
     "invoices": "Invoices",
@@ -227,7 +263,8 @@
     "dailyReport": "Daily Report",
     "monthlyReport": "Monthly Report",
     "revenue": "Revenue",
-    "netIncome": "Net Income"
+    "netIncome": "Net Income",
+    "invoice": "Invoice"
   },
   "inbox": {
     "title": "Inbox",
@@ -286,16 +323,29 @@
   },
   "settings": {
     "title": "Settings",
+    "description": "Manage your account settings and preferences",
     "general": "General",
+    "personal": "Personal Settings",
     "profile": "Profile",
+    "profileDescription": "Manage your personal information and preferences",
     "security": "Security",
+    "securityDescription": "Password, two-factor authentication, and security settings",
     "notifications": "Notifications",
+    "notificationsDescription": "Configure notification preferences and alerts",
     "language": "Language",
+    "languageDescription": "Change your preferred language and region settings",
     "changePassword": "Change Password",
     "enable2FA": "Enable Two-Factor Authentication",
     "clinic": "Clinic Settings",
-    "branches": "Branches",
+    "clinicInfo": "Clinic Information",
+    "clinicInfoDescription": "Manage clinic details, working hours, and branches",
+    "staff": "Staff Management",
+    "staffDescription": "Manage staff accounts, roles, and permissions",
     "services": "Services",
+    "servicesDescription": "Configure available services and pricing",
+    "billing": "Billing",
+    "billingDescription": "Configure billing settings and payment methods",
+    "branches": "Branches",
     "workingHours": "Working Hours",
     "holidays": "Holidays"
   },
