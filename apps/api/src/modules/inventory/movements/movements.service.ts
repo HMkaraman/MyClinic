@@ -2,6 +2,9 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma, MovementType } from '@prisma/client';
 
 import { PrismaService } from '../../../prisma/prisma.service';
+import { validateSortBy } from '../../../common/utils/validate-sort-by.util';
+
+const ALLOWED_SORT_FIELDS = ['createdAt', 'type', 'quantity'] as const;
 
 export interface QueryMovementsDto {
   itemId?: string;
@@ -45,12 +48,14 @@ export class MovementsService {
       if (endDate) where.createdAt.lte = new Date(endDate);
     }
 
+    const validatedSortBy = validateSortBy(sortBy, ALLOWED_SORT_FIELDS, 'createdAt');
+
     const [movements, total] = await Promise.all([
       this.prisma.inventoryMovement.findMany({
         where,
         skip,
         take: limit,
-        orderBy: { [sortBy]: sortOrder },
+        orderBy: { [validatedSortBy]: sortOrder },
         include: {
           item: { select: { id: true, sku: true, name: true } },
           user: { select: { id: true, name: true } },

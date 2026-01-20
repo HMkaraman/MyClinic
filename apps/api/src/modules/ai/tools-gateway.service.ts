@@ -3,7 +3,7 @@ import { Role, TaskPriority, TaskEntityType, InvoiceStatus } from '@prisma/clien
 
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
-import { JwtPayload } from '../auth/decorators/current-user.decorator';
+import type { JwtPayload } from '../auth/decorators/current-user.decorator';
 import {
   ToolName,
   ToolResultDto,

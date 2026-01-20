@@ -17,6 +17,9 @@ import {
   InvoiceItemDto,
 } from './dto';
 import { JwtPayload } from '../auth/decorators/current-user.decorator';
+import { validateSortBy } from '../../common/utils/validate-sort-by.util';
+
+const ALLOWED_SORT_FIELDS = ['createdAt', 'updatedAt', 'invoiceNumber', 'total', 'status'] as const;
 
 const ADMIN_ROLES: Role[] = [Role.ADMIN, Role.MANAGER];
 const CLOSED_INVOICE_STATUSES: InvoiceStatus[] = [
@@ -91,12 +94,14 @@ export class InvoicesService {
       }
     }
 
+    const validatedSortBy = validateSortBy(sortBy, ALLOWED_SORT_FIELDS, 'createdAt');
+
     const [invoices, total] = await Promise.all([
       this.prisma.invoice.findMany({
         where,
         skip,
         take: limit,
-        orderBy: { [sortBy!]: sortOrder },
+        orderBy: { [validatedSortBy]: sortOrder },
         include: {
           patient: {
             select: { id: true, name: true, phone: true, fileNumber: true },

@@ -4,6 +4,9 @@ import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { ActivityService } from '../../activity/activity.service';
 import { CreateCategoryDto, UpdateCategoryDto, QueryCategoriesDto } from './dto';
+import { validateSortBy } from '../../../common/utils/validate-sort-by.util';
+
+const ALLOWED_SORT_FIELDS = ['createdAt', 'updatedAt', 'name'] as const;
 
 @Injectable()
 export class CategoriesService {
@@ -34,12 +37,14 @@ export class CategoriesService {
       where.active = active;
     }
 
+    const validatedSortBy = validateSortBy(sortBy, ALLOWED_SORT_FIELDS, 'name');
+
     const [categories, total] = await Promise.all([
       this.prisma.inventoryCategory.findMany({
         where,
         skip,
         take: limit,
-        orderBy: { [sortBy!]: sortOrder },
+        orderBy: { [validatedSortBy]: sortOrder },
         include: {
           parent: { select: { id: true, name: true } },
           _count: { select: { children: true, items: true } },

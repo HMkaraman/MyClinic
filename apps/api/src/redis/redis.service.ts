@@ -84,7 +84,13 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
 
   async getSession(sessionId: string): Promise<Record<string, unknown> | null> {
     const data = await this.client.get(`session:${sessionId}`);
-    return data ? JSON.parse(data) : null;
+    if (!data) return null;
+    try {
+      return JSON.parse(data);
+    } catch {
+      console.error(`Failed to parse session data for ${sessionId}`);
+      return null;
+    }
   }
 
   async deleteSession(sessionId: string): Promise<void> {

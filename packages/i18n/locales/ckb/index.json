@@ -436,5 +436,31 @@
     "networkError": "هەڵەی تۆڕ، پەیوەندیەکەت بپشکنە",
     "unauthorized": "مۆڵەتت نییە بۆ ئەم کارە",
     "notFound": "بڕگەکە نەدۆزرایەوە"
+  },
+  "pwa": {
+    "updateAvailable": "نوێکردنەوە بەردەستە",
+    "updateMessage": "وەشانێکی نوێی کلینیکم بەردەستە.",
+    "update": "نوێکردنەوە",
+    "offline": "ئۆفلاینیت",
+    "offlineMessage": "هەندێک تایبەتمەندی لەوانەیە نەبێت.",
+    "backOnline": "دووبارە سەرهێڵی",
+    "syncingData": "داتاکانت هاوکات دەکرێت...",
+    "installTitle": "کلینیکم دابمەزرێنە",
+    "installMessage": "بۆ دەستڕاگەیشتنی خێرا بیزیاد بکە بۆ شاشەی سەرەکی.",
+    "install": "دامەزراندن",
+    "notNow": "ئێستا نا"
+  },
+  "home": {
+    "tagline": "سیستەمی تەواو بۆ بەڕێوەبردنی کلینیک لەگەڵ زیرەکی دەستکرد",
+    "milestone": "قۆناغی 0 - ڕێکخستنی پڕۆژە",
+    "patients": "نەخۆشەکان",
+    "patientsDescription": "بەڕێوەبردنی فایلەکانی نەخۆشان",
+    "appointments": "مەوعیدەکان",
+    "appointmentsDescription": "خشتەبەندی مەوعیدەکان",
+    "invoices": "پسوولەکان",
+    "invoicesDescription": "دەرهێنانی پسوولە",
+    "inbox": "پەیامەکان",
+    "inboxDescription": "بەڕێوەبردنی گفتوگۆکان",
+    "techStack": "دروستکراوە بە Next.js • NestJS • PostgreSQL • Prisma • Tailwind CSS"
   }
 }

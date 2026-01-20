@@ -10,6 +10,9 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { ActivityService } from '../activity/activity.service';
 import { CreateVisitDto, UpdateVisitDto, QueryVisitsDto } from './dto';
 import { JwtPayload } from '../auth/decorators/current-user.decorator';
+import { validateSortBy } from '../../common/utils/validate-sort-by.util';
+
+const ALLOWED_SORT_FIELDS = ['createdAt', 'updatedAt'] as const;
 
 const ADMIN_ROLES: Role[] = [Role.ADMIN, Role.MANAGER];
 const MEDICAL_STAFF_ROLES: Role[] = [Role.DOCTOR, Role.NURSE];
@@ -73,12 +76,14 @@ export class VisitsService {
       }
     }
 
+    const validatedSortBy = validateSortBy(sortBy, ALLOWED_SORT_FIELDS, 'createdAt');
+
     const [visits, total] = await Promise.all([
       this.prisma.visit.findMany({
         where,
         skip,
         take: limit,
-        orderBy: { [sortBy!]: sortOrder },
+        orderBy: { [validatedSortBy]: sortOrder },
         include: {
           patient: {
             select: { id: true, name: true, phone: true, fileNumber: true },

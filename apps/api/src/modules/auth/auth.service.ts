@@ -79,13 +79,14 @@ export class AuthService {
     // Enforce 2FA for sensitive roles (ADMIN, MANAGER)
     if (SENSITIVE_ROLES.includes(user.role) && !user.twoFactorEnabled) {
       // Generate a limited-scope setup token valid for 10 minutes
+      const jwtSecret = this.configService.get<string>('JWT_SECRET');
+      if (!jwtSecret) {
+        throw new Error('JWT_SECRET environment variable is required');
+      }
       const setupToken = await this.jwtService.signAsync(
         { sub: user.id, tenantId: user.tenantId, purpose: '2fa-setup' },
         {
-          secret: this.configService.get<string>(
-            'JWT_SECRET',
-            'myclinic-jwt-secret',
-          ),
+          secret: jwtSecret,
           expiresIn: '10m',
         },
       );
@@ -159,11 +160,12 @@ export class AuthService {
 
   async refreshTokens(dto: RefreshTokenDto): Promise<TokenPair> {
     try {
+      const refreshSecret = this.configService.get<string>('JWT_REFRESH_SECRET');
+      if (!refreshSecret) {
+        throw new Error('JWT_REFRESH_SECRET environment variable is required');
+      }
       const payload = this.jwtService.verify<JwtPayload>(dto.refreshToken, {
-        secret: this.configService.get<string>(
-          'JWT_REFRESH_SECRET',
-          'myclinic-jwt-refresh-secret',
-        ),
+        secret: refreshSecret,
       });
 
       // Check if refresh token is blacklisted
@@ -371,19 +373,21 @@ export class AuthService {
   }
 
   private async generateTokens(payload: JwtPayload): Promise<TokenPair> {
+    const jwtSecret = this.configService.get<string>('JWT_SECRET');
+    const jwtRefreshSecret = this.configService.get<string>('JWT_REFRESH_SECRET');
+    if (!jwtSecret) {
+      throw new Error('JWT_SECRET environment variable is required');
+    }
+    if (!jwtRefreshSecret) {
+      throw new Error('JWT_REFRESH_SECRET environment variable is required');
+    }
     const [accessToken, refreshToken] = await Promise.all([
       this.jwtService.signAsync(payload, {
-        secret: this.configService.get<string>(
-          'JWT_SECRET',
-          'myclinic-jwt-secret',
-        ),
+        secret: jwtSecret,
         expiresIn: this.accessTokenExpiry,
       }),
       this.jwtService.signAsync(payload, {
-        secret: this.configService.get<string>(
-          'JWT_REFRESH_SECRET',
-          'myclinic-jwt-refresh-secret',
-        ),
+        secret: jwtRefreshSecret,
         expiresIn: this.refreshTokenExpiry,
       }),
     ]);

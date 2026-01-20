@@ -1,5 +1,6 @@
-import { Injectable, NestMiddleware } from '@nestjs/common';
-import { Request, Response, NextFunction } from 'express';
+import { Injectable } from '@nestjs/common';
+import type { NestMiddleware } from '@nestjs/common';
+import type { Request, Response, NextFunction } from 'express';
 import { tenantContext } from '../context/tenant-context';
 
 @Injectable()

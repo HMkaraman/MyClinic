@@ -726,6 +726,19 @@
     "install": "Install",
     "notNow": "Not Now"
   },
+  "home": {
+    "tagline": "An integrated medical clinic management system with AI",
+    "milestone": "Milestone 0 - Project Setup",
+    "patients": "Patients",
+    "patientsDescription": "Manage patient files",
+    "appointments": "Appointments",
+    "appointmentsDescription": "Schedule appointments",
+    "invoices": "Invoices",
+    "invoicesDescription": "Issue invoices",
+    "inbox": "Inbox",
+    "inboxDescription": "Manage conversations",
+    "techStack": "Built with Next.js • NestJS • PostgreSQL • Prisma • Tailwind CSS"
+  },
   "offline": {
     "title": "You're Offline",
     "description": "It looks like you've lost your internet connection. Some features may be unavailable.",

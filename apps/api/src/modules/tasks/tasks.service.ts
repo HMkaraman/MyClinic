@@ -11,6 +11,9 @@ import { ActivityService } from '../activity/activity.service';
 import { CreateTaskDto, UpdateTaskDto, QueryTasksDto } from './dto';
 import { JwtPayload } from '../auth/decorators/current-user.decorator';
 import { NOTIFICATION_EVENTS } from '../notifications/events/notification.events';
+import { validateSortBy } from '../../common/utils/validate-sort-by.util';
+
+const ALLOWED_SORT_FIELDS = ['createdAt', 'updatedAt', 'dueDate', 'priority', 'status'] as const;
 
 const ADMIN_ROLES: Role[] = [Role.ADMIN, Role.MANAGER];
 
@@ -84,12 +87,14 @@ export class TasksService {
       }
     }
 
+    const validatedSortBy = validateSortBy(sortBy, ALLOWED_SORT_FIELDS, 'dueDate');
+
     const [tasks, total] = await Promise.all([
       this.prisma.task.findMany({
         where,
         skip,
         take: limit,
-        orderBy: { [sortBy!]: sortOrder },
+        orderBy: { [validatedSortBy]: sortOrder },
         include: {
           assignee: {
             select: { id: true, name: true, email: true },

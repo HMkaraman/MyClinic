@@ -15,6 +15,9 @@ export class EncryptionUtil {
     if (!key) {
       throw new Error('INTEGRATION_ENCRYPTION_KEY environment variable is not set');
     }
+    if (key.length < 32) {
+      throw new Error('INTEGRATION_ENCRYPTION_KEY must be at least 32 characters');
+    }
     return key;
   }
 

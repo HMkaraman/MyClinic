@@ -68,7 +68,7 @@ export function Header({ onMenuClick }: HeaderProps) {
 
   const handleLogout = async () => {
     await logout();
-    router.push('/auth/login');
+    router.push(`/${locale}/auth/login`);
   };
 
   const userInitials = user?.name

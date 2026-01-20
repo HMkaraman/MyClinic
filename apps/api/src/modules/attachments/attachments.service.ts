@@ -50,12 +50,21 @@ export class AttachmentsService {
     private activityService: ActivityService,
   ) {
     // Initialize S3 client (works with MinIO too)
-    const endpoint = this.configService.get<string>('S3_ENDPOINT', 'http://localhost:9000');
+    const endpoint = this.configService.get<string>('S3_ENDPOINT');
     const region = this.configService.get<string>('S3_REGION', 'us-east-1');
-    const accessKeyId = this.configService.get<string>('S3_ACCESS_KEY', 'minioadmin');
-    const secretAccessKey = this.configService.get<string>('S3_SECRET_KEY', 'minioadmin');
+    const accessKeyId = this.configService.get<string>('S3_ACCESS_KEY');
+    const secretAccessKey = this.configService.get<string>('S3_SECRET_KEY');
+    const bucket = this.configService.get<string>('S3_BUCKET');
 
-    this.bucket = this.configService.get<string>('S3_BUCKET', 'myclinic-attachments');
+    if (!accessKeyId || !secretAccessKey) {
+      throw new Error('S3_ACCESS_KEY and S3_SECRET_KEY environment variables are required');
+    }
+
+    if (!bucket) {
+      throw new Error('S3_BUCKET environment variable is required');
+    }
+
+    this.bucket = bucket;
 
     this.s3Client = new S3Client({
       endpoint,

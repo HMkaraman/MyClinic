@@ -20,6 +20,9 @@ import {
   CancelAppointmentDto,
 } from './dto';
 import { JwtPayload } from '../auth/decorators/current-user.decorator';
+import { validateSortBy } from '../../common/utils/validate-sort-by.util';
+
+const ALLOWED_SORT_FIELDS = ['createdAt', 'updatedAt', 'scheduledAt', 'status'] as const;
 
 const ADMIN_ROLES: Role[] = [Role.ADMIN, Role.MANAGER];
 const TERMINAL_STATUSES: AppointmentStatus[] = [
@@ -117,12 +120,14 @@ export class AppointmentsService {
       }
     }
 
+    const validatedSortBy = validateSortBy(sortBy, ALLOWED_SORT_FIELDS, 'scheduledAt');
+
     const [appointments, total] = await Promise.all([
       this.prisma.appointment.findMany({
         where,
         skip,
         take: limit,
-        orderBy: { [sortBy!]: sortOrder },
+        orderBy: { [validatedSortBy]: sortOrder },
         include: {
           patient: {
             select: { id: true, name: true, phone: true, fileNumber: true },

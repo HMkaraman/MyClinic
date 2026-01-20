@@ -11,6 +11,9 @@ import {
   TimeOffApprovedEvent,
   TimeOffRejectedEvent,
 } from '../events/scheduling.events';
+import { validateSortBy } from '../../../common/utils/validate-sort-by.util';
+
+const ALLOWED_SORT_FIELDS = ['createdAt', 'updatedAt', 'startDate', 'endDate', 'status', 'type'] as const;
 
 @Injectable()
 export class TimeOffService {
@@ -54,12 +57,14 @@ export class TimeOffService {
       ];
     }
 
+    const validatedSortBy = validateSortBy(sortBy, ALLOWED_SORT_FIELDS, 'startDate');
+
     const [requests, total] = await Promise.all([
       this.prisma.timeOffRequest.findMany({
         where,
         skip,
         take: limit,
-        orderBy: { [sortBy!]: sortOrder },
+        orderBy: { [validatedSortBy]: sortOrder },
         include: {
           user: { select: { id: true, name: true, role: true } },
           reviewer: { select: { id: true, name: true } },

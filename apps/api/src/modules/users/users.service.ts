@@ -9,6 +9,9 @@ import * as bcrypt from 'bcryptjs';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ActivityService } from '../activity/activity.service';
 import { CreateUserDto, UpdateUserDto, QueryUsersDto } from './dto';
+import { validateSortBy } from '../../common/utils/validate-sort-by.util';
+
+const ALLOWED_SORT_FIELDS = ['createdAt', 'updatedAt', 'name', 'email', 'role', 'status'] as const;
 
 @Injectable()
 export class UsersService {
@@ -44,12 +47,14 @@ export class UsersService {
       where.branchIds = { has: branchId };
     }
 
+    const validatedSortBy = validateSortBy(sortBy, ALLOWED_SORT_FIELDS, 'name');
+
     const [users, total] = await Promise.all([
       this.prisma.user.findMany({
         where,
         skip,
         take: limit,
-        orderBy: { [sortBy!]: sortOrder },
+        orderBy: { [validatedSortBy]: sortOrder },
         select: {
           id: true,
           email: true,

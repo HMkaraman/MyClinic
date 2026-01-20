@@ -726,6 +726,19 @@
     "install": "تثبيت",
     "notNow": "ليس الآن"
   },
+  "home": {
+    "tagline": "نظام متكامل لإدارة العيادات الطبية مع الذكاء الاصطناعي",
+    "milestone": "المرحلة 0 - تهيئة المشروع",
+    "patients": "المرضى",
+    "patientsDescription": "إدارة ملفات المرضى",
+    "appointments": "المواعيد",
+    "appointmentsDescription": "جدولة المواعيد",
+    "invoices": "الفواتير",
+    "invoicesDescription": "إصدار الفواتير",
+    "inbox": "صندوق الوارد",
+    "inboxDescription": "إدارة المحادثات",
+    "techStack": "مبني باستخدام Next.js • NestJS • PostgreSQL • Prisma • Tailwind CSS"
+  },
   "offline": {
     "title": "أنت غير متصل",
     "description": "يبدو أنك فقدت اتصالك بالإنترنت. بعض الميزات قد تكون غير متاحة.",

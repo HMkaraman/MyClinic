@@ -11,6 +11,9 @@ import { PrismaService } from '../../../prisma/prisma.service';
 import { ActivityService } from '../../activity/activity.service';
 import { CreateItemDto, UpdateItemDto, AdjustStockDto, QueryItemsDto } from './dto';
 import { INVENTORY_EVENTS, LowStockAlertEvent } from '../events/inventory.events';
+import { validateSortBy } from '../../../common/utils/validate-sort-by.util';
+
+const ALLOWED_SORT_FIELDS = ['createdAt', 'updatedAt', 'name', 'sku', 'quantityInStock'] as const;
 
 @Injectable()
 export class ItemsService {
@@ -75,6 +78,8 @@ export class ItemsService {
       where.expiryDate = { lte: expiryThreshold };
     }
 
+    const validatedSortBy = validateSortBy(sortBy, ALLOWED_SORT_FIELDS, 'name');
+
     // For low stock, we need a raw query approach
     let items: any[];
     let total: number;
@@ -83,6 +88,16 @@ export class ItemsService {
       // Use raw query for comparing two columns
       const baseWhere = { ...where };
       delete baseWhere.quantityInStock;
+
+      // Map sortBy to database column names
+      const sortColumnMap: Record<string, string> = {
+        name: 'name',
+        sku: 'sku',
+        createdAt: 'created_at',
+        updatedAt: 'updated_at',
+        quantityInStock: 'quantity_in_stock',
+      };
+      const sortColumn = sortColumnMap[validatedSortBy] || 'name';
 
       [items, total] = await Promise.all([
         this.prisma.$queryRaw<any[]>`
@@ -93,7 +108,7 @@ export class ItemsService {
           WHERE i.tenant_id = ${tenantId}
             AND i.quantity_in_stock <= i.reorder_point
             ${active !== undefined ? Prisma.sql`AND i.active = ${active}` : Prisma.empty}
-          ORDER BY i.${Prisma.raw(sortBy === 'name' ? 'name' : sortBy!)} ${Prisma.raw(sortOrder!.toUpperCase())}
+          ORDER BY i.${Prisma.raw(sortColumn)} ${Prisma.raw(sortOrder!.toUpperCase())}
           LIMIT ${limit} OFFSET ${skip}
         `,
         this.prisma.$queryRaw<[{ count: bigint }]>`
@@ -110,7 +125,7 @@ export class ItemsService {
           where,
           skip,
           take: limit,
-          orderBy: { [sortBy!]: sortOrder },
+          orderBy: { [validatedSortBy]: sortOrder },
           include: {
             category: { select: { id: true, name: true } },
             supplier: { select: { id: true, name: true } },

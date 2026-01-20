@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { useAuthStore } from '@/stores/auth-store';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,6 +12,7 @@ import { Loader2, Building2 } from 'lucide-react';
 
 export default function LoginPage() {
   const t = useTranslations();
+  const locale = useLocale();
   const router = useRouter();
   const { login, isLoading, requires2FA, requires2FASetup, isAuthenticated } = useAuthStore();
 
@@ -21,13 +22,13 @@ export default function LoginPage() {
 
   React.useEffect(() => {
     if (isAuthenticated) {
-      router.push('/dashboard');
+      router.push(`/${locale}/dashboard`);
     } else if (requires2FA) {
-      router.push('/auth/2fa');
+      router.push(`/${locale}/auth/2fa`);
     } else if (requires2FASetup) {
-      router.push('/auth/2fa-setup');
+      router.push(`/${locale}/auth/2fa-setup`);
     }
-  }, [isAuthenticated, requires2FA, requires2FASetup, router]);
+  }, [isAuthenticated, requires2FA, requires2FASetup, router, locale]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

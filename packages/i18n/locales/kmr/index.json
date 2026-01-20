@@ -436,5 +436,31 @@
     "networkError": "Çewtiya torê, girêdana xwe kontrol bike",
     "unauthorized": "Tu ne destûrdar î ji bo vê karê",
     "notFound": "Hêman nehat dîtin"
+  },
+  "pwa": {
+    "updateAvailable": "Nûvekirin Heye",
+    "updateMessage": "Guhertoyek nû ya Klînîka Min heye.",
+    "update": "Nû bike",
+    "offline": "Tu Bêtor î",
+    "offlineMessage": "Dibe ku hin taybetmendî tune bin.",
+    "backOnline": "Dîsa Serhêl",
+    "syncingData": "Daneyên te tên hevdemkirin...",
+    "installTitle": "Klînîka Min Saz bike",
+    "installMessage": "Ji bo gihîştina bilez li ser ekrana xwe zêde bike.",
+    "install": "Saz bike",
+    "notNow": "Niha Na"
+  },
+  "home": {
+    "tagline": "Pergalek yekgirtî ji bo birêvebirina klînîkên bijîjkî bi zîrekiya destçêkirî",
+    "milestone": "Qonaxa 0 - Sazkirina Projeyê",
+    "patients": "Nexweş",
+    "patientsDescription": "Birêvebirina dosyeyên nexweşan",
+    "appointments": "Mewqît",
+    "appointmentsDescription": "Plankirin mewqîtan",
+    "invoices": "Fatore",
+    "invoicesDescription": "Derxistina fatoreyan",
+    "inbox": "Sandûqa Wergirtin",
+    "inboxDescription": "Birêvebirina axaftinan",
+    "techStack": "Bi Next.js • NestJS • PostgreSQL • Prisma • Tailwind CSS hatî çêkirin"
   }
 }

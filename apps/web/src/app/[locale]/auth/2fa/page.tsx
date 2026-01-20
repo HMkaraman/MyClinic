@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { useAuthStore } from '@/stores/auth-store';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,6 +12,7 @@ import { Loader2, ShieldCheck, ArrowLeft } from 'lucide-react';
 
 export default function TwoFactorPage() {
   const t = useTranslations();
+  const locale = useLocale();
   const router = useRouter();
   const { verify2FA, isLoading, requires2FA, isAuthenticated, reset } = useAuthStore();
 
@@ -20,11 +21,11 @@ export default function TwoFactorPage() {
 
   React.useEffect(() => {
     if (isAuthenticated) {
-      router.push('/dashboard');
+      router.push(`/${locale}/dashboard`);
     } else if (!requires2FA) {
-      router.push('/auth/login');
+      router.push(`/${locale}/auth/login`);
     }
-  }, [isAuthenticated, requires2FA, router]);
+  }, [isAuthenticated, requires2FA, router, locale]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,13 +34,13 @@ export default function TwoFactorPage() {
     try {
       await verify2FA(code);
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('errors.invalid2FACode'));
+      setError(err instanceof Error ? err.message : t('auth.invalidCode'));
     }
   };
 
   const handleBack = () => {
     reset();
-    router.push('/auth/login');
+    router.push(`/${locale}/auth/login`);
   };
 
   return (

@@ -35,11 +35,12 @@ export class SetupTokenGuard implements CanActivate {
     }
 
     try {
+      const jwtSecret = this.configService.get<string>('JWT_SECRET');
+      if (!jwtSecret) {
+        throw new Error('JWT_SECRET environment variable is required');
+      }
       const payload = this.jwtService.verify<SetupTokenPayload>(token, {
-        secret: this.configService.get<string>(
-          'JWT_SECRET',
-          'myclinic-jwt-secret',
-        ),
+        secret: jwtSecret,
       });
 
       // Verify this is a setup token

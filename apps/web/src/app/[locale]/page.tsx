@@ -17,7 +17,7 @@ export default function HomePage() {
         </h1>
 
         <p className="text-xl text-muted-foreground mb-8">
-          نظام متكامل لإدارة العيادات الطبية مع الذكاء الاصطناعي
+          {t('home.tagline')}
         </p>
 
         {/* Status Badge */}
@@ -26,26 +26,26 @@ export default function HomePage() {
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
             <span className="relative inline-flex rounded-full h-3 w-3 bg-primary"></span>
           </span>
-          <span className="text-sm font-medium">Milestone 0 - تهيئة المشروع</span>
+          <span className="text-sm font-medium">{t('home.milestone')}</span>
         </div>
 
         {/* Quick Actions */}
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-12">
           <div className="rounded-lg border bg-card p-6 text-card-foreground shadow-sm">
-            <h3 className="font-semibold">المرضى</h3>
-            <p className="text-sm text-muted-foreground">إدارة ملفات المرضى</p>
+            <h3 className="font-semibold">{t('home.patients')}</h3>
+            <p className="text-sm text-muted-foreground">{t('home.patientsDescription')}</p>
           </div>
           <div className="rounded-lg border bg-card p-6 text-card-foreground shadow-sm">
-            <h3 className="font-semibold">المواعيد</h3>
-            <p className="text-sm text-muted-foreground">جدولة المواعيد</p>
+            <h3 className="font-semibold">{t('home.appointments')}</h3>
+            <p className="text-sm text-muted-foreground">{t('home.appointmentsDescription')}</p>
           </div>
           <div className="rounded-lg border bg-card p-6 text-card-foreground shadow-sm">
-            <h3 className="font-semibold">الفواتير</h3>
-            <p className="text-sm text-muted-foreground">إصدار الفواتير</p>
+            <h3 className="font-semibold">{t('home.invoices')}</h3>
+            <p className="text-sm text-muted-foreground">{t('home.invoicesDescription')}</p>
           </div>
           <div className="rounded-lg border bg-card p-6 text-card-foreground shadow-sm">
-            <h3 className="font-semibold">صندوق الوارد</h3>
-            <p className="text-sm text-muted-foreground">إدارة المحادثات</p>
+            <h3 className="font-semibold">{t('home.inbox')}</h3>
+            <p className="text-sm text-muted-foreground">{t('home.inboxDescription')}</p>
           </div>
         </div>
 
@@ -65,7 +65,7 @@ export default function HomePage() {
         {/* Tech Stack Info */}
         <div className="mt-12 pt-8 border-t">
           <p className="text-sm text-muted-foreground">
-            Built with Next.js • NestJS • PostgreSQL • Prisma • Tailwind CSS
+            {t('home.techStack')}
           </p>
         </div>
       </div>

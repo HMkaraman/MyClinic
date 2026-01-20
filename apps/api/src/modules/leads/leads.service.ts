@@ -10,6 +10,9 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { ActivityService } from '../activity/activity.service';
 import { CreateLeadDto, UpdateLeadDto, QueryLeadsDto } from './dto';
 import { JwtPayload } from '../auth/decorators/current-user.decorator';
+import { validateSortBy } from '../../common/utils/validate-sort-by.util';
+
+const ALLOWED_SORT_FIELDS = ['createdAt', 'updatedAt', 'name', 'phone', 'stage'] as const;
 
 // Map Channel (lead source) to PatientSource
 function channelToPatientSource(channel: Channel): PatientSource {
@@ -71,12 +74,14 @@ export class LeadsService {
       }
     }
 
+    const validatedSortBy = validateSortBy(sortBy, ALLOWED_SORT_FIELDS, 'createdAt');
+
     const [leads, total] = await Promise.all([
       this.prisma.lead.findMany({
         where,
         skip,
         take: limit,
-        orderBy: { [sortBy!]: sortOrder },
+        orderBy: { [validatedSortBy]: sortOrder },
         include: {
           patient: {
             select: { id: true, name: true, phone: true, fileNumber: true },

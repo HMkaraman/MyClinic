@@ -15,6 +15,9 @@ import {
   CreateInternalNoteDto,
 } from './dto';
 import { JwtPayload } from '../auth/decorators/current-user.decorator';
+import { validateSortBy } from '../../common/utils/validate-sort-by.util';
+
+const ALLOWED_SORT_FIELDS = ['createdAt', 'updatedAt', 'lastMessageAt', 'status'] as const;
 
 const ADMIN_ROLES: Role[] = [Role.ADMIN, Role.MANAGER];
 
@@ -86,12 +89,10 @@ export class ConversationsService {
       ];
     }
 
-    const orderBy: Prisma.ConversationOrderByWithRelationInput = {};
-    if (sortBy === 'lastMessageAt') {
-      orderBy.lastMessageAt = sortOrder;
-    } else {
-      orderBy[sortBy as keyof Prisma.ConversationOrderByWithRelationInput] = sortOrder;
-    }
+    const validatedSortBy = validateSortBy(sortBy, ALLOWED_SORT_FIELDS, 'lastMessageAt');
+    const orderBy: Prisma.ConversationOrderByWithRelationInput = {
+      [validatedSortBy]: sortOrder,
+    };
 
     const [conversations, total] = await Promise.all([
       this.prisma.conversation.findMany({

@@ -3,6 +3,7 @@ import {
   NestInterceptor,
   ExecutionContext,
   CallHandler,
+  Logger,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { Observable, from, switchMap, tap, catchError } from 'rxjs';
@@ -30,6 +31,8 @@ const MODEL_MAP: Record<string, string> = {
 
 @Injectable()
 export class AuditInterceptor implements NestInterceptor {
+  private readonly logger = new Logger(AuditInterceptor.name);
+
   constructor(
     private reflector: Reflector,
     private auditService: AuditService,
@@ -194,7 +197,7 @@ export class AuditInterceptor implements NestInterceptor {
         userAgent: request.headers['user-agent'],
       })
       .catch((err) => {
-        console.error('Failed to log audit event:', err);
+        this.logger.error('Failed to log audit event', err instanceof Error ? err.stack : err);
       });
   }
 
@@ -224,7 +227,10 @@ export class AuditInterceptor implements NestInterceptor {
       });
       return entity;
     } catch (error) {
-      console.error(`Failed to fetch before state for ${entityType}:${entityId}:`, error);
+      this.logger.error(
+        `Failed to fetch before state for ${entityType}:${entityId}`,
+        error instanceof Error ? error.stack : error,
+      );
       return null;
     }
   }

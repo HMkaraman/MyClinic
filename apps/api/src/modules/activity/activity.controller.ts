@@ -8,7 +8,8 @@ import {
 } from '@nestjs/swagger';
 
 import { ActivityService } from './activity.service';
-import { CurrentUser, JwtPayload } from '../auth/decorators/current-user.decorator';
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import type { JwtPayload } from '../auth/decorators/current-user.decorator';
 
 @ApiTags('activity')
 @ApiBearerAuth()

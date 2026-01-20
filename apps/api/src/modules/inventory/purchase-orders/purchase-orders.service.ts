@@ -20,6 +20,9 @@ import {
   PurchaseOrderApprovedEvent,
   PurchaseOrderReceivedEvent,
 } from '../events/inventory.events';
+import { validateSortBy } from '../../../common/utils/validate-sort-by.util';
+
+const ALLOWED_SORT_FIELDS = ['createdAt', 'updatedAt', 'orderNumber', 'orderDate', 'status', 'total'] as const;
 
 @Injectable()
 export class PurchaseOrdersService {
@@ -50,12 +53,14 @@ export class PurchaseOrdersService {
       if (endDate) where.orderDate.lte = new Date(endDate);
     }
 
+    const validatedSortBy = validateSortBy(sortBy, ALLOWED_SORT_FIELDS, 'orderDate');
+
     const [orders, total] = await Promise.all([
       this.prisma.purchaseOrder.findMany({
         where,
         skip,
         take: limit,
-        orderBy: { [sortBy!]: sortOrder },
+        orderBy: { [validatedSortBy]: sortOrder },
         include: {
           supplier: { select: { id: true, name: true } },
           creator: { select: { id: true, name: true } },

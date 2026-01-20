@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { ShieldCheck, Loader2, ArrowLeft, Copy, Check } from 'lucide-react';
 
 import { useAuthStore } from '@/stores/auth-store';
@@ -19,6 +19,7 @@ import { Label } from '@/components/ui/label';
 
 export default function TwoFactorSetupPage() {
   const t = useTranslations();
+  const locale = useLocale();
   const router = useRouter();
   const {
     requires2FASetup,
@@ -40,11 +41,11 @@ export default function TwoFactorSetupPage() {
   // Redirect guards
   React.useEffect(() => {
     if (isAuthenticated) {
-      router.push('/dashboard');
+      router.push(`/${locale}/dashboard`);
     } else if (!requires2FASetup || !setupToken) {
-      router.push('/auth/login');
+      router.push(`/${locale}/auth/login`);
     }
-  }, [isAuthenticated, requires2FASetup, setupToken, router]);
+  }, [isAuthenticated, requires2FASetup, setupToken, router, locale]);
 
   // Initiate setup on mount
   React.useEffect(() => {
@@ -77,7 +78,7 @@ export default function TwoFactorSetupPage() {
 
   const handleBack = () => {
     cancelSetup();
-    router.push('/auth/login');
+    router.push(`/${locale}/auth/login`);
   };
 
   if (!requires2FASetup) return null;

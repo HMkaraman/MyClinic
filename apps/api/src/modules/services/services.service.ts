@@ -4,6 +4,9 @@ import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ActivityService } from '../activity/activity.service';
 import { CreateServiceDto, UpdateServiceDto, QueryServicesDto } from './dto';
+import { validateSortBy } from '../../common/utils/validate-sort-by.util';
+
+const ALLOWED_SORT_FIELDS = ['createdAt', 'updatedAt', 'name', 'price'] as const;
 
 @Injectable()
 export class ServicesService {
@@ -34,12 +37,14 @@ export class ServicesService {
       where.active = active;
     }
 
+    const validatedSortBy = validateSortBy(sortBy, ALLOWED_SORT_FIELDS, 'name');
+
     const [services, total] = await Promise.all([
       this.prisma.service.findMany({
         where,
         skip,
         take: limit,
-        orderBy: { [sortBy!]: sortOrder },
+        orderBy: { [validatedSortBy]: sortOrder },
       }),
       this.prisma.service.count({ where }),
     ]);
