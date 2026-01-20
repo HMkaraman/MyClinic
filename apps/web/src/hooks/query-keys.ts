@@ -2,6 +2,8 @@ import type { PatientListParams } from '@/lib/patients-api';
 import type { AppointmentListParams } from '@/lib/appointments-api';
 import type { VisitListParams } from '@/lib/visits-api';
 import type { InvoiceListParams } from '@/lib/invoices-api';
+import type { UserListParams } from '@/lib/users-api';
+import type { ServiceListParams } from '@/lib/services-api';
 
 export const queryKeys = {
   // Patients
@@ -53,6 +55,28 @@ export const queryKeys = {
     financeStats: () => [...queryKeys.invoices.all, 'financeStats'] as const,
     recentInvoices: () => [...queryKeys.invoices.all, 'recent'] as const,
     recentPayments: () => [...queryKeys.invoices.all, 'recentPayments'] as const,
+  },
+
+  // Users
+  users: {
+    all: ['users'] as const,
+    lists: () => [...queryKeys.users.all, 'list'] as const,
+    list: (params: UserListParams) =>
+      [...queryKeys.users.lists(), params] as const,
+    details: () => [...queryKeys.users.all, 'detail'] as const,
+    detail: (id: string) => [...queryKeys.users.details(), id] as const,
+    doctors: () => [...queryKeys.users.all, 'doctors'] as const,
+  },
+
+  // Services
+  services: {
+    all: ['services'] as const,
+    lists: () => [...queryKeys.services.all, 'list'] as const,
+    list: (params: ServiceListParams) =>
+      [...queryKeys.services.lists(), params] as const,
+    details: () => [...queryKeys.services.all, 'detail'] as const,
+    detail: (id: string) => [...queryKeys.services.details(), id] as const,
+    active: () => [...queryKeys.services.all, 'active'] as const,
   },
 
   // Inventory (using existing inventoryApi)
