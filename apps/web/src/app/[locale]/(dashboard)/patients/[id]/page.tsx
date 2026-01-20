@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import Link from 'next/link';
+import { useParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -31,10 +32,6 @@ import {
   Pill,
   Activity,
 } from 'lucide-react';
-
-interface PatientDetailPageProps {
-  params: { id: string };
-}
 
 const mockPatient = {
   id: '1',
@@ -110,7 +107,8 @@ const mockInvoices = [
   },
 ];
 
-export default function PatientDetailPage({ params }: PatientDetailPageProps) {
+export default function PatientDetailPage() {
+  const params = useParams();
   const t = useTranslations();
   const patient = mockPatient;
 
@@ -138,13 +136,13 @@ export default function PatientDetailPage({ params }: PatientDetailPageProps) {
           <p className="text-muted-foreground">{patient.fileNumber}</p>
         </div>
         <Button variant="outline" asChild>
-          <Link href={`/patients/${params.id}/edit`}>
+          <Link href={`/patients/${params.id as string}/edit`}>
             <Edit className="me-2 h-4 w-4" />
             {t('common.edit')}
           </Link>
         </Button>
         <Button asChild>
-          <Link href={`/appointments/new?patientId=${params.id}`}>
+          <Link href={`/appointments/new?patientId=${params.id as string}`}>
             <Plus className="me-2 h-4 w-4" />
             {t('appointments.newAppointment')}
           </Link>

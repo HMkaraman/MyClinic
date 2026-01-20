@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import Link from 'next/link';
+import { useParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -25,10 +26,6 @@ import {
   Calendar,
   Building,
 } from 'lucide-react';
-
-interface InvoiceDetailPageProps {
-  params: { id: string };
-}
 
 const mockInvoice = {
   id: '1',
@@ -112,7 +109,8 @@ const paymentMethodLabels: Record<string, string> = {
   OTHER: 'أخرى',
 };
 
-export default function InvoiceDetailPage({ params }: InvoiceDetailPageProps) {
+export default function InvoiceDetailPage() {
+  const params = useParams();
   const t = useTranslations();
   const invoice = mockInvoice;
 
@@ -145,14 +143,14 @@ export default function InvoiceDetailPage({ params }: InvoiceDetailPageProps) {
         <div className="flex gap-2">
           {(invoice.status === 'pending' || invoice.status === 'partial') && (
             <Button asChild>
-              <Link href={`/finance/invoices/${params.id}/payment`}>
+              <Link href={`/finance/invoices/${params.id as string}/payment`}>
                 <CreditCard className="me-2 h-4 w-4" />
                 {t('finance.addPayment')}
               </Link>
             </Button>
           )}
           <Button variant="outline" asChild>
-            <Link href={`/finance/invoices/${params.id}/edit`}>
+            <Link href={`/finance/invoices/${params.id as string}/edit`}>
               <Edit className="me-2 h-4 w-4" />
               {t('common.edit')}
             </Link>
@@ -294,7 +292,7 @@ export default function InvoiceDetailPage({ params }: InvoiceDetailPageProps) {
                 <CardTitle>{t('finance.payments')}</CardTitle>
                 {(invoice.status === 'pending' || invoice.status === 'partial') && (
                   <Button variant="outline" size="sm" asChild>
-                    <Link href={`/finance/invoices/${params.id}/payment`}>
+                    <Link href={`/finance/invoices/${params.id as string}/payment`}>
                       <CreditCard className="me-2 h-4 w-4" />
                       {t('finance.addPayment')}
                     </Link>

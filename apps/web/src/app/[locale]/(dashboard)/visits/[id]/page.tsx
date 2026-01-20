@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import Link from 'next/link';
+import { useParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -18,10 +19,6 @@ import {
   Printer,
   Clock,
 } from 'lucide-react';
-
-interface VisitDetailPageProps {
-  params: { id: string };
-}
 
 const mockVisit = {
   id: '1',
@@ -84,7 +81,8 @@ const mockVisit = {
   updatedAt: '2024-01-18T11:45:00',
 };
 
-export default function VisitDetailPage({ params }: VisitDetailPageProps) {
+export default function VisitDetailPage() {
+  const params = useParams();
   const t = useTranslations();
   const visit = mockVisit;
 
@@ -106,7 +104,7 @@ export default function VisitDetailPage({ params }: VisitDetailPageProps) {
           </p>
         </div>
         <Button variant="outline" asChild>
-          <Link href={`/visits/${params.id}/edit`}>
+          <Link href={`/visits/${params.id as string}/edit`}>
             <Edit className="me-2 h-4 w-4" />
             {t('common.edit')}
           </Link>
