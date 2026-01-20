@@ -45,6 +45,14 @@ export class InvoicesController {
     return this.invoicesService.findAll(user, query);
   }
 
+  @Get('stats/finance')
+  @Roles(Role.ACCOUNTANT, Role.ADMIN, Role.MANAGER)
+  @ApiOperation({ summary: 'Get finance statistics' })
+  @ApiResponse({ status: 200, description: 'Finance stats' })
+  async getFinanceStats(@CurrentUser() user: JwtPayload) {
+    return this.invoicesService.getFinanceStats(user);
+  }
+
   @Get(':id')
   @Roles(Role.ACCOUNTANT, Role.ADMIN, Role.MANAGER, Role.RECEPTION)
   @ApiOperation({ summary: 'Get invoice by ID' })

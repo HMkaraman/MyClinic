@@ -620,4 +620,42 @@ export class AppointmentsService {
 
     return updated;
   }
+
+  async getTodayStats(user: JwtPayload) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    const where: Prisma.AppointmentWhereInput = {
+      tenantId: user.tenantId,
+      scheduledAt: { gte: today, lt: tomorrow },
+    };
+
+    // Branch scoping for non-admin users
+    if (!ADMIN_ROLES.includes(user.role) && user.branchIds.length > 0) {
+      where.branchId = { in: user.branchIds };
+    }
+
+    const appointments = await this.prisma.appointment.groupBy({
+      by: ['status'],
+      where,
+      _count: { id: true },
+    });
+
+    const statusCounts = appointments.reduce((acc, item) => {
+      acc[item.status] = item._count.id;
+      return acc;
+    }, {} as Record<string, number>);
+
+    return {
+      total: Object.values(statusCounts).reduce((a, b) => a + b, 0),
+      confirmed: statusCounts[AppointmentStatus.CONFIRMED] || 0,
+      completed: statusCounts[AppointmentStatus.COMPLETED] || 0,
+      waiting: (statusCounts[AppointmentStatus.ARRIVED] || 0) +
+               (statusCounts[AppointmentStatus.IN_PROGRESS] || 0),
+      noShow: statusCounts[AppointmentStatus.NO_SHOW] || 0,
+      cancelled: statusCounts[AppointmentStatus.CANCELLED] || 0,
+    };
+  }
 }

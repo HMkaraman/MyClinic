@@ -57,6 +57,13 @@ export class AppointmentsController {
     return this.appointmentsService.getAvailableSlots(user, query);
   }
 
+  @Get('stats/today')
+  @ApiOperation({ summary: 'Get today appointment statistics' })
+  @ApiResponse({ status: 200, description: 'Today stats' })
+  async getTodayStats(@CurrentUser() user: JwtPayload) {
+    return this.appointmentsService.getTodayStats(user);
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'Get appointment by ID' })
   @ApiResponse({ status: 200, description: 'Appointment found' })

@@ -442,6 +442,67 @@ export class InvoicesService {
     };
   }
 
+  async getFinanceStats(user: JwtPayload) {
+    const now = new Date();
+    const todayStart = new Date(now);
+    todayStart.setHours(0, 0, 0, 0);
+    const weekStart = new Date(now);
+    weekStart.setDate(weekStart.getDate() - 7);
+    const monthStart = new Date(now);
+    monthStart.setDate(1);
+    monthStart.setHours(0, 0, 0, 0);
+    const lastMonthStart = new Date(monthStart);
+    lastMonthStart.setMonth(lastMonthStart.getMonth() - 1);
+
+    const baseWhere: Prisma.PaymentWhereInput = {
+      invoice: { tenantId: user.tenantId },
+    };
+
+    // Calculate revenues using Payment records
+    const [todayPayments, weekPayments, monthPayments, lastMonthPayments] = await Promise.all([
+      this.prisma.payment.aggregate({
+        where: { ...baseWhere, createdAt: { gte: todayStart } },
+        _sum: { amount: true },
+      }),
+      this.prisma.payment.aggregate({
+        where: { ...baseWhere, createdAt: { gte: weekStart } },
+        _sum: { amount: true },
+      }),
+      this.prisma.payment.aggregate({
+        where: { ...baseWhere, createdAt: { gte: monthStart } },
+        _sum: { amount: true },
+      }),
+      this.prisma.payment.aggregate({
+        where: { ...baseWhere, createdAt: { gte: lastMonthStart, lt: monthStart } },
+        _sum: { amount: true },
+      }),
+    ]);
+
+    // Calculate pending payments from unpaid invoices
+    const pendingInvoices = await this.prisma.invoice.aggregate({
+      where: {
+        tenantId: user.tenantId,
+        status: { in: [InvoiceStatus.PENDING, InvoiceStatus.PARTIAL] },
+      },
+      _sum: { total: true, paidAmount: true },
+    });
+
+    const monthRevenue = monthPayments._sum.amount?.toNumber() || 0;
+    const lastMonthRevenue = lastMonthPayments._sum.amount?.toNumber() || 0;
+    const revenueChange = lastMonthRevenue > 0
+      ? ((monthRevenue - lastMonthRevenue) / lastMonthRevenue) * 100
+      : 0;
+
+    return {
+      todayRevenue: todayPayments._sum.amount?.toNumber() || 0,
+      weekRevenue: weekPayments._sum.amount?.toNumber() || 0,
+      monthRevenue,
+      pendingPayments: (pendingInvoices._sum.total?.toNumber() || 0) -
+                       (pendingInvoices._sum.paidAmount?.toNumber() || 0),
+      revenueChange: Math.round(revenueChange * 100) / 100,
+    };
+  }
+
   private calculateSubtotal(items: InvoiceItemDto[]): {
     subtotal: Prisma.Decimal;
     items: Array<InvoiceItemDto & { total: number }>;
