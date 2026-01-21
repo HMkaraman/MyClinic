@@ -12,20 +12,25 @@ class ApiClient {
 
   constructor(baseUrl: string) {
     this.baseUrl = baseUrl;
-    if (typeof window !== 'undefined') {
-      this.accessToken = localStorage.getItem('accessToken');
+  }
+
+  private getStoredToken(): string | null {
+    if (typeof window === 'undefined') return null;
+    try {
+      const stored = localStorage.getItem('auth-storage');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        return parsed?.state?.accessToken || null;
+      }
+    } catch {
+      // Ignore parse errors
     }
+    return null;
   }
 
   setAccessToken(token: string | null) {
     this.accessToken = token;
-    if (typeof window !== 'undefined') {
-      if (token) {
-        localStorage.setItem('accessToken', token);
-      } else {
-        localStorage.removeItem('accessToken');
-      }
-    }
+    // Token persistence is handled by Zustand auth-store
   }
 
   getAccessToken() {
@@ -41,8 +46,9 @@ class ApiClient {
       ...options.headers,
     };
 
-    if (this.accessToken) {
-      (headers as Record<string, string>)['Authorization'] = `Bearer ${this.accessToken}`;
+    const token = this.accessToken || this.getStoredToken();
+    if (token) {
+      (headers as Record<string, string>)['Authorization'] = `Bearer ${token}`;
     }
 
     const response = await fetch(`${this.baseUrl}${endpoint}`, {
@@ -90,6 +96,7 @@ export const api = new ApiClient(API_BASE_URL);
 export interface LoginRequest {
   email: string;
   password: string;
+  twoFactorCode?: string;
 }
 
 export interface LoginResponse {

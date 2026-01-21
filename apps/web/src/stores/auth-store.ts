@@ -21,6 +21,7 @@ interface AuthState {
   isLoading: boolean;
   requires2FA: boolean;
   tempToken: string | null;
+  pendingCredentials: { email: string; password: string } | null;
 
   // 2FA Setup state
   requires2FASetup: boolean;
@@ -50,6 +51,7 @@ const initialState = {
   isLoading: false,
   requires2FA: false,
   tempToken: null,
+  pendingCredentials: null,
 
   // 2FA Setup state
   requires2FASetup: false,
@@ -68,24 +70,31 @@ export const useAuthStore = create<AuthState>()(
         try {
           const response = await authApi.login(data);
 
-          if (response.requires2FA && response.tempToken) {
+          if (response.requires2FA) {
             set({
               isLoading: false,
               requires2FA: true,
-              tempToken: response.tempToken,
+              pendingCredentials: { email: data.email, password: data.password },
             });
             return true;
           }
 
+          // Validate response has all required fields before setting authenticated
+          if (!response.accessToken || !response.refreshToken || !response.user) {
+            set({ isLoading: false });
+            throw new Error('Invalid login response: missing required fields');
+          }
+
           api.setAccessToken(response.accessToken);
           set({
-            user: response.user || null,
+            user: response.user,
             accessToken: response.accessToken,
             refreshToken: response.refreshToken,
             isAuthenticated: true,
             isLoading: false,
             requires2FA: false,
             tempToken: null,
+            pendingCredentials: null,
           });
           return true;
         } catch (error: unknown) {
@@ -106,24 +115,34 @@ export const useAuthStore = create<AuthState>()(
       },
 
       verify2FA: async (code: string) => {
-        const { tempToken } = get();
-        if (!tempToken) {
-          throw new Error('No temp token available');
+        const { pendingCredentials } = get();
+        if (!pendingCredentials) {
+          throw new Error('No pending login');
         }
 
         set({ isLoading: true });
         try {
-          const response = await authApi.verify2FA({ tempToken, code });
+          const response = await authApi.login({
+            email: pendingCredentials.email,
+            password: pendingCredentials.password,
+            twoFactorCode: code,
+          });
+
+          // Validate response has all required fields before setting authenticated
+          if (!response.accessToken || !response.refreshToken || !response.user) {
+            set({ isLoading: false });
+            throw new Error('Invalid 2FA response: missing required fields');
+          }
 
           api.setAccessToken(response.accessToken);
           set({
-            user: response.user || null,
+            user: response.user,
             accessToken: response.accessToken,
             refreshToken: response.refreshToken,
             isAuthenticated: true,
             isLoading: false,
             requires2FA: false,
-            tempToken: null,
+            pendingCredentials: null,
           });
           return true;
         } catch {
@@ -196,13 +215,19 @@ export const useAuthStore = create<AuthState>()(
         try {
           const response = await authApi.verify2FASetup(setupToken, code);
 
+          // Validate response has all required fields before setting authenticated
+          if (!response.accessToken || !response.refreshToken || !response.user) {
+            set({ isLoading: false });
+            throw new Error('Invalid 2FA setup response: missing required fields');
+          }
+
           // Complete login with returned tokens
           api.setAccessToken(response.accessToken);
 
           set({
             isLoading: false,
             isAuthenticated: true,
-            user: response.user || null,
+            user: response.user,
             accessToken: response.accessToken,
             refreshToken: response.refreshToken,
             requires2FASetup: false,
@@ -234,6 +259,27 @@ export const useAuthStore = create<AuthState>()(
         refreshToken: state.refreshToken,
         isAuthenticated: state.isAuthenticated,
       }),
+      onRehydrateStorage: () => (state) => {
+        if (state) {
+          // Validate state consistency
+          const hasValidAuth = state.isAuthenticated && state.accessToken && state.user;
+
+          if (state.isAuthenticated && !hasValidAuth) {
+            // Inconsistent state - clear localStorage and reset
+            if (typeof window !== 'undefined') {
+              localStorage.removeItem('auth-storage');
+            }
+            // Reset state via the store
+            useAuthStore.setState(initialState);
+            return;
+          }
+
+          // Sync token to API client
+          if (state.accessToken) {
+            api.setAccessToken(state.accessToken);
+          }
+        }
+      },
     }
   )
 );
