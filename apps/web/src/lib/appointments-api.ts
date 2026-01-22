@@ -48,11 +48,10 @@ export interface Appointment {
 export interface CreateAppointmentDto {
   patientId: string;
   doctorId: string;
-  serviceId?: string;
-  branchId?: string;
-  date: string;
-  startTime: string;
-  duration: number;
+  serviceId: string;
+  branchId: string;
+  scheduledAt: string;
+  durationMinutes?: number;
   notes?: string;
 }
 
@@ -61,9 +60,8 @@ export interface UpdateAppointmentDto extends Partial<CreateAppointmentDto> {
 }
 
 export interface RescheduleAppointmentDto {
-  date: string;
-  startTime: string;
-  duration?: number;
+  newScheduledAt: string;
+  reason?: string;
 }
 
 export interface AppointmentListParams {
@@ -81,17 +79,15 @@ export interface AppointmentListParams {
 }
 
 export interface AvailableSlot {
-  date: string;
-  startTime: string;
-  endTime: string;
-  doctorId: string;
+  start: string;      // ISO date string from backend
+  end: string;        // ISO date string from backend
   available: boolean;
 }
 
 export interface AvailableSlotsParams {
   doctorId: string;
   date: string;
-  duration?: number;
+  durationMinutes?: number;  // Backend expects durationMinutes, not duration
 }
 
 function buildQueryString(params: AppointmentListParams): string {
@@ -121,7 +117,7 @@ export const appointmentsApi = {
     const searchParams = new URLSearchParams();
     searchParams.append('doctorId', params.doctorId);
     searchParams.append('date', params.date);
-    if (params.duration) searchParams.append('duration', params.duration.toString());
+    if (params.durationMinutes) searchParams.append('durationMinutes', params.durationMinutes.toString());
     return api.get<AvailableSlot[]>(`/appointments/available-slots?${searchParams.toString()}`);
   },
 
