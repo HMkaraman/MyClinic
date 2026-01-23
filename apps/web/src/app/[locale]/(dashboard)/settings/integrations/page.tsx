@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -84,7 +84,17 @@ const mockRecentLogs = [
 
 export default function IntegrationsPage() {
   const t = useTranslations();
-  const [integrations, setIntegrations] = React.useState(mockIntegrations);
+  const locale = useLocale();
+
+  // Create integrations with locale-prefixed hrefs
+  const getIntegrationsWithLocale = React.useCallback(() => {
+    return mockIntegrations.map(integration => ({
+      ...integration,
+      href: `/${locale}${integration.href}`,
+    }));
+  }, [locale]);
+
+  const [integrations, setIntegrations] = React.useState(getIntegrationsWithLocale);
 
   const handleToggle = (id: string) => {
     setIntegrations(
@@ -102,7 +112,7 @@ export default function IntegrationsPage() {
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" asChild>
-            <Link href="/settings">
+            <Link href={`/${locale}/settings`}>
               <ArrowLeft className="h-4 w-4" />
             </Link>
           </Button>
@@ -116,7 +126,7 @@ export default function IntegrationsPage() {
           </div>
         </div>
         <Button variant="outline" asChild>
-          <Link href="/settings/integrations/logs">
+          <Link href={`/${locale}/settings/integrations/logs`}>
             <Activity className="me-2 h-4 w-4" />
             {t('integrations.viewLogs') || 'View Logs'}
           </Link>
@@ -258,7 +268,7 @@ export default function IntegrationsPage() {
               </p>
             </div>
             <Button variant="outline" asChild>
-              <Link href="/settings/integrations/reminders">
+              <Link href={`/${locale}/settings/integrations/reminders`}>
                 <Settings className="me-2 h-4 w-4" />
                 {t('common.settings') || 'Settings'}
               </Link>
@@ -297,7 +307,7 @@ export default function IntegrationsPage() {
             ))}
           </div>
           <Button variant="link" className="mt-4 px-0" asChild>
-            <Link href="/settings/integrations/logs">
+            <Link href={`/${locale}/settings/integrations/logs`}>
               {t('integrations.viewAllLogs') || 'View all activity logs'} →
             </Link>
           </Button>

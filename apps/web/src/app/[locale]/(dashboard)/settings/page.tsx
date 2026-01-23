@@ -2,87 +2,50 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   User,
   Shield,
-  Bell,
-  Globe,
-  Building,
-  Users,
-  Stethoscope,
-  Receipt,
+  Plug,
   ArrowRight,
 } from 'lucide-react';
 
-const settingsGroups = [
-  {
-    title: 'settings.personal',
-    items: [
-      {
-        title: 'settings.profile',
-        description: 'settings.profileDescription',
-        href: '/settings/profile',
-        icon: User,
-      },
-      {
-        title: 'settings.security',
-        description: 'settings.securityDescription',
-        href: '/settings/security',
-        icon: Shield,
-      },
-      {
-        title: 'settings.notifications',
-        description: 'settings.notificationsDescription',
-        href: '/settings/notifications',
-        icon: Bell,
-      },
-      {
-        title: 'settings.language',
-        description: 'settings.languageDescription',
-        href: '/settings/language',
-        icon: Globe,
-      },
-    ],
-  },
-  {
-    title: 'settings.clinic',
-    items: [
-      {
-        title: 'settings.clinicInfo',
-        description: 'settings.clinicInfoDescription',
-        href: '/settings/clinic',
-        icon: Building,
-        adminOnly: true,
-      },
-      {
-        title: 'settings.staff',
-        description: 'settings.staffDescription',
-        href: '/settings/staff',
-        icon: Users,
-        adminOnly: true,
-      },
-      {
-        title: 'settings.services',
-        description: 'settings.servicesDescription',
-        href: '/settings/services',
-        icon: Stethoscope,
-        adminOnly: true,
-      },
-      {
-        title: 'settings.billing',
-        description: 'settings.billingDescription',
-        href: '/settings/billing',
-        icon: Receipt,
-        adminOnly: true,
-      },
-    ],
-  },
-];
-
 export default function SettingsPage() {
   const t = useTranslations();
+  const locale = useLocale();
+
+  const settingsGroups = [
+    {
+      title: 'settings.personal',
+      items: [
+        {
+          title: 'settings.profile',
+          description: 'settings.profileDescription',
+          href: `/${locale}/settings/profile`,
+          icon: User,
+        },
+        {
+          title: 'settings.security',
+          description: 'settings.securityDescription',
+          href: `/${locale}/settings/security`,
+          icon: Shield,
+        },
+      ],
+    },
+    {
+      title: 'settings.clinic',
+      items: [
+        {
+          title: 'settings.integrations',
+          description: 'settings.integrationsDescription',
+          href: `/${locale}/settings/integrations`,
+          icon: Plug,
+          adminOnly: true,
+        },
+      ],
+    },
+  ];
 
   return (
     <div className="space-y-6">

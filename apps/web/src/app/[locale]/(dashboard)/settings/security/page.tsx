@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -26,6 +26,14 @@ import {
   MapPin,
   AlertTriangle,
 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+
+// Error state type
+interface PasswordErrors {
+  currentPassword?: string;
+  newPassword?: string;
+  confirmPassword?: string;
+}
 
 const mockSessions = [
   {
@@ -46,16 +54,82 @@ const mockSessions = [
 
 export default function SecuritySettingsPage() {
   const t = useTranslations();
+  const locale = useLocale();
+  const { toast } = useToast();
   const [isLoading, setIsLoading] = React.useState(false);
   const [is2FAEnabled, setIs2FAEnabled] = React.useState(false);
+  const [passwordErrors, setPasswordErrors] = React.useState<PasswordErrors>({});
   const [passwordForm, setPasswordForm] = React.useState({
     currentPassword: '',
     newPassword: '',
     confirmPassword: '',
   });
 
+  // Validate password form and return true if valid
+  const validatePasswordForm = (): boolean => {
+    const errors: PasswordErrors = {};
+    const missingFields: string[] = [];
+
+    if (!passwordForm.currentPassword) {
+      errors.currentPassword = 'errors.required';
+      missingFields.push(t('settings.currentPassword'));
+    }
+    if (!passwordForm.newPassword) {
+      errors.newPassword = 'errors.required';
+      missingFields.push(t('settings.newPassword'));
+    }
+    if (!passwordForm.confirmPassword) {
+      errors.confirmPassword = 'errors.required';
+      missingFields.push(t('settings.confirmPassword'));
+    }
+
+    // Check password length
+    if (passwordForm.newPassword && passwordForm.newPassword.length < 8) {
+      errors.newPassword = 'errors.minLength';
+    }
+
+    // Check passwords match
+    if (passwordForm.newPassword && passwordForm.confirmPassword &&
+        passwordForm.newPassword !== passwordForm.confirmPassword) {
+      errors.confirmPassword = 'errors.passwordMismatch';
+    }
+
+    setPasswordErrors(errors);
+
+    if (Object.keys(errors).length > 0) {
+      toast({
+        title: t('common.error'),
+        description: (
+          <div className="space-y-2">
+            {missingFields.length > 0 && (
+              <div>
+                <p className="font-medium">{t('errors.missingRequiredFields')}:</p>
+                <ul className="list-disc list-inside ms-2 mt-1">
+                  {missingFields.map((field, index) => (
+                    <li key={index}>{field}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {errors.newPassword === 'errors.minLength' && <p>{t('errors.minLength', { min: 8 })}</p>}
+            {errors.confirmPassword === 'errors.passwordMismatch' && <p>{t('errors.passwordMismatch')}</p>}
+          </div>
+        ),
+        variant: 'destructive',
+      });
+      return false;
+    }
+
+    return true;
+  };
+
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!validatePasswordForm()) {
+      return;
+    }
+
     setIsLoading(true);
     // Would send to API
     await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -64,6 +138,12 @@ export default function SecuritySettingsPage() {
       currentPassword: '',
       newPassword: '',
       confirmPassword: '',
+    });
+    setPasswordErrors({});
+
+    toast({
+      title: t('common.success'),
+      description: t('common.success'),
     });
   };
 
@@ -85,7 +165,7 @@ export default function SecuritySettingsPage() {
       {/* Header */}
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="icon" asChild>
-          <Link href="/settings">
+          <Link href={`/${locale}/settings`}>
             <ArrowLeft className="h-5 w-5 rtl:rotate-180" />
           </Link>
         </Button>
@@ -116,38 +196,47 @@ export default function SecuritySettingsPage() {
           <CardContent>
             <form onSubmit={handleChangePassword} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="currentPassword">{t('settings.currentPassword')}</Label>
+                <Label htmlFor="currentPassword">{t('settings.currentPassword')} <span className="text-destructive">*</span></Label>
                 <Input
                   id="currentPassword"
                   type="password"
                   value={passwordForm.currentPassword}
-                  onChange={(e) =>
-                    setPasswordForm({ ...passwordForm, currentPassword: e.target.value })
-                  }
+                  onChange={(e) => {
+                    setPasswordForm({ ...passwordForm, currentPassword: e.target.value });
+                    if (passwordErrors.currentPassword) setPasswordErrors(prev => ({ ...prev, currentPassword: undefined }));
+                  }}
+                  error={!!passwordErrors.currentPassword}
                 />
+                {passwordErrors.currentPassword && <p className="text-sm text-destructive">{t(passwordErrors.currentPassword)}</p>}
               </div>
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="newPassword">{t('settings.newPassword')}</Label>
+                  <Label htmlFor="newPassword">{t('settings.newPassword')} <span className="text-destructive">*</span></Label>
                   <Input
                     id="newPassword"
                     type="password"
                     value={passwordForm.newPassword}
-                    onChange={(e) =>
-                      setPasswordForm({ ...passwordForm, newPassword: e.target.value })
-                    }
+                    onChange={(e) => {
+                      setPasswordForm({ ...passwordForm, newPassword: e.target.value });
+                      if (passwordErrors.newPassword) setPasswordErrors(prev => ({ ...prev, newPassword: undefined }));
+                    }}
+                    error={!!passwordErrors.newPassword}
                   />
+                  {passwordErrors.newPassword && <p className="text-sm text-destructive">{t(passwordErrors.newPassword, { min: 8 })}</p>}
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="confirmPassword">{t('settings.confirmPassword')}</Label>
+                  <Label htmlFor="confirmPassword">{t('settings.confirmPassword')} <span className="text-destructive">*</span></Label>
                   <Input
                     id="confirmPassword"
                     type="password"
                     value={passwordForm.confirmPassword}
-                    onChange={(e) =>
-                      setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })
-                    }
+                    onChange={(e) => {
+                      setPasswordForm({ ...passwordForm, confirmPassword: e.target.value });
+                      if (passwordErrors.confirmPassword) setPasswordErrors(prev => ({ ...prev, confirmPassword: undefined }));
+                    }}
+                    error={!!passwordErrors.confirmPassword}
                   />
+                  {passwordErrors.confirmPassword && <p className="text-sm text-destructive">{t(passwordErrors.confirmPassword)}</p>}
                 </div>
               </div>
               <div className="flex justify-end">

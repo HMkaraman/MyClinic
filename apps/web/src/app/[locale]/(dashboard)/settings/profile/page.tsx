@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -14,6 +14,18 @@ import {
   Camera,
   Save,
 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+
+// Validation regex
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const PHONE_REGEX = /^[\d\s\-\+\(\)]{7,}$/;
+
+// Error state type
+interface FieldErrors {
+  name?: string;
+  email?: string;
+  phone?: string;
+}
 
 const mockUser = {
   id: '1',
@@ -27,7 +39,10 @@ const mockUser = {
 
 export default function ProfileSettingsPage() {
   const t = useTranslations();
+  const locale = useLocale();
+  const { toast } = useToast();
   const [isLoading, setIsLoading] = React.useState(false);
+  const [fieldErrors, setFieldErrors] = React.useState<FieldErrors>({});
   const [formData, setFormData] = React.useState({
     name: mockUser.name,
     email: mockUser.email,
@@ -41,12 +56,76 @@ export default function ProfileSettingsPage() {
     .join('')
     .slice(0, 2);
 
+  // Validate form and return true if valid
+  const validateForm = (): boolean => {
+    const errors: FieldErrors = {};
+    const missingFields: string[] = [];
+
+    // Check required fields
+    if (!formData.name.trim()) {
+      errors.name = 'errors.required';
+      missingFields.push(t('common.name'));
+    }
+    if (!formData.email.trim()) {
+      errors.email = 'errors.required';
+      missingFields.push(t('common.email'));
+    }
+
+    // Validate email format if provided
+    if (formData.email.trim() && !EMAIL_REGEX.test(formData.email.trim())) {
+      errors.email = 'errors.invalidEmail';
+    }
+
+    // Validate phone format if provided
+    if (formData.phone.trim() && !PHONE_REGEX.test(formData.phone.trim())) {
+      errors.phone = 'errors.invalidPhone';
+    }
+
+    setFieldErrors(errors);
+
+    if (Object.keys(errors).length > 0) {
+      toast({
+        title: t('common.error'),
+        description: (
+          <div className="space-y-2">
+            {missingFields.length > 0 && (
+              <div>
+                <p className="font-medium">{t('errors.missingRequiredFields')}:</p>
+                <ul className="list-disc list-inside ms-2 mt-1">
+                  {missingFields.map((field, index) => (
+                    <li key={index}>{field}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {errors.email === 'errors.invalidEmail' && <p>{t('errors.invalidEmail')}</p>}
+            {errors.phone === 'errors.invalidPhone' && <p>{t('errors.invalidPhone')}</p>}
+          </div>
+        ),
+        variant: 'destructive',
+      });
+      return false;
+    }
+
+    return true;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!validateForm()) {
+      return;
+    }
+
     setIsLoading(true);
     // Would send to API
     await new Promise((resolve) => setTimeout(resolve, 1000));
     setIsLoading(false);
+
+    toast({
+      title: t('common.success'),
+      description: t('common.success'),
+    });
   };
 
   return (
@@ -54,7 +133,7 @@ export default function ProfileSettingsPage() {
       {/* Header */}
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="icon" asChild>
-          <Link href="/settings">
+          <Link href={`/${locale}/settings`}>
             <ArrowLeft className="h-5 w-5 rtl:rotate-180" />
           </Link>
         </Button>
@@ -111,25 +190,31 @@ export default function ProfileSettingsPage() {
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="name">{t('common.name')}</Label>
+                  <Label htmlFor="name">{t('common.name')} <span className="text-destructive">*</span></Label>
                   <Input
                     id="name"
                     value={formData.name}
-                    onChange={(e) =>
-                      setFormData({ ...formData, name: e.target.value })
-                    }
+                    onChange={(e) => {
+                      setFormData({ ...formData, name: e.target.value });
+                      if (fieldErrors.name) setFieldErrors(prev => ({ ...prev, name: undefined }));
+                    }}
+                    error={!!fieldErrors.name}
                   />
+                  {fieldErrors.name && <p className="text-sm text-destructive">{t(fieldErrors.name)}</p>}
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="email">{t('common.email')}</Label>
+                  <Label htmlFor="email">{t('common.email')} <span className="text-destructive">*</span></Label>
                   <Input
                     id="email"
                     type="email"
                     value={formData.email}
-                    onChange={(e) =>
-                      setFormData({ ...formData, email: e.target.value })
-                    }
+                    onChange={(e) => {
+                      setFormData({ ...formData, email: e.target.value });
+                      if (fieldErrors.email) setFieldErrors(prev => ({ ...prev, email: undefined }));
+                    }}
+                    error={!!fieldErrors.email}
                   />
+                  {fieldErrors.email && <p className="text-sm text-destructive">{t(fieldErrors.email)}</p>}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="phone">{t('common.phone')}</Label>
@@ -137,10 +222,13 @@ export default function ProfileSettingsPage() {
                     id="phone"
                     dir="ltr"
                     value={formData.phone}
-                    onChange={(e) =>
-                      setFormData({ ...formData, phone: e.target.value })
-                    }
+                    onChange={(e) => {
+                      setFormData({ ...formData, phone: e.target.value });
+                      if (fieldErrors.phone) setFieldErrors(prev => ({ ...prev, phone: undefined }));
+                    }}
+                    error={!!fieldErrors.phone}
                   />
+                  {fieldErrors.phone && <p className="text-sm text-destructive">{t(fieldErrors.phone)}</p>}
                 </div>
                 {mockUser.role === 'DOCTOR' && (
                   <div className="space-y-2">
@@ -160,7 +248,7 @@ export default function ProfileSettingsPage() {
 
               <div className="flex justify-end gap-4">
                 <Button type="button" variant="outline" asChild>
-                  <Link href="/settings">{t('common.cancel')}</Link>
+                  <Link href={`/${locale}/settings`}>{t('common.cancel')}</Link>
                 </Button>
                 <Button type="submit" disabled={isLoading}>
                   {isLoading ? (

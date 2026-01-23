@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
@@ -88,6 +88,7 @@ const mockProviders: PaymentProvider[] = [
 
 export default function PaymentsIntegrationPage() {
   const t = useTranslations();
+  const locale = useLocale();
   const [providers, setProviders] = React.useState(mockProviders);
   const [activeTab, setActiveTab] = React.useState('stripe');
   const [showSecrets, setShowSecrets] = React.useState<Record<string, boolean>>({});
@@ -151,7 +152,7 @@ export default function PaymentsIntegrationPage() {
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" asChild>
-            <Link href="/settings/integrations">
+            <Link href={`/${locale}/settings/integrations`}>
               <ArrowLeft className="h-4 w-4" />
             </Link>
           </Button>
