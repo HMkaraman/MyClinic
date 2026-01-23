@@ -8,12 +8,16 @@ import {
   User,
   Shield,
   Plug,
+  Users,
   ArrowRight,
 } from 'lucide-react';
+import { useAuthStore } from '@/stores/auth-store';
 
 export default function SettingsPage() {
   const t = useTranslations();
   const locale = useLocale();
+  const { user } = useAuthStore();
+  const isAdmin = user?.role === 'ADMIN';
 
   const settingsGroups = [
     {
@@ -36,6 +40,17 @@ export default function SettingsPage() {
     {
       title: 'settings.clinic',
       items: [
+        ...(isAdmin
+          ? [
+              {
+                title: 'settings.staff',
+                description: 'settings.staffDescription',
+                href: `/${locale}/settings/staff`,
+                icon: Users,
+                adminOnly: true,
+              },
+            ]
+          : []),
         {
           title: 'settings.integrations',
           description: 'settings.integrationsDescription',

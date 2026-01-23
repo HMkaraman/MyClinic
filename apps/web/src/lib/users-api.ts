@@ -11,8 +11,39 @@ export interface User {
   role: UserRole;
   phone?: string;
   status: UserStatus;
+  branchIds?: string[];
+  branches?: Branch[];
+  language?: 'ar' | 'en' | 'ckb' | 'kmr';
   createdAt: string;
   updatedAt: string;
+}
+
+export interface Branch {
+  id: string;
+  name: string;
+  address?: string;
+  phone?: string;
+}
+
+export interface CreateUserDto {
+  email: string;
+  name: string;
+  password: string;
+  phone?: string;
+  role: UserRole;
+  branchIds: string[];
+  language?: 'ar' | 'en' | 'ckb' | 'kmr';
+}
+
+export interface UpdateUserDto {
+  email?: string;
+  name?: string;
+  password?: string;
+  phone?: string;
+  role?: UserRole;
+  branchIds?: string[];
+  language?: 'ar' | 'en' | 'ckb' | 'kmr';
+  status?: UserStatus;
 }
 
 export interface UserListParams {
@@ -39,7 +70,19 @@ export const usersApi = {
     api.get<PaginatedResponse<User>>(`/users${buildQueryString(params)}`),
 
   getDoctors: () =>
-    api.get<PaginatedResponse<User>>(`/users?role=DOCTOR&status=ACTIVE`),
+    api.get<PaginatedResponse<User>>(`/users/doctors`),
 
   getUser: (id: string) => api.get<User>(`/users/${id}`),
+
+  createUser: (data: CreateUserDto) =>
+    api.post<User>('/users', data),
+
+  updateUser: (id: string, data: UpdateUserDto) =>
+    api.patch<User>(`/users/${id}`, data),
+
+  deleteUser: (id: string) =>
+    api.delete<void>(`/users/${id}`),
+
+  getBranches: () =>
+    api.get<Branch[]>('/tenant/branches'),
 };
